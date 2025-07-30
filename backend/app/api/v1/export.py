@@ -11,7 +11,9 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.dependencies import get_current_active_user, rate_limit_moderate, rate_limit_generous
 from app.models.video import Export, Frame, Video
+from app.models.user import User
 
 router = APIRouter()
 
@@ -141,7 +143,9 @@ async def create_export_background(export_id: int, db: Session):
 async def create_export(
     request: ExportRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
 ):
     """
     Start an export job for selected frames
@@ -166,10 +170,15 @@ async def create_export(
         
         # Create export record
         export_record = Export(
+            user_id=current_user.id,
             frame_ids=request.frame_ids,
             export_format=request.export_format,
             status="pending"
         )
+        
+        # Update user stats
+        current_user.export_count += 1
+        db.commit()
         
         db.add(export_record)
         db.commit()
@@ -192,11 +201,19 @@ async def create_export(
         raise HTTPException(status_code=500, detail=f"Failed to create export: {str(e)}")
 
 @router.get("/{export_id}/status", response_model=ExportStatus)
-async def get_export_status(export_id: int, db: Session = Depends(get_db)):
+async def get_export_status(
+    export_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get the status of an export job
     """
-    export_record = db.query(Export).filter(Export.id == export_id).first()
+    export_record = db.query(Export).filter(
+        Export.id == export_id,
+        Export.user_id == current_user.id
+    ).first()
     if not export_record:
         raise HTTPException(status_code=404, detail="Export not found")
     
@@ -221,11 +238,19 @@ async def get_export_status(export_id: int, db: Session = Depends(get_db)):
     )
 
 @router.get("/{export_id}/download")
-async def download_export(export_id: int, db: Session = Depends(get_db)):
+async def download_export(
+    export_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Download the exported file
     """
-    export_record = db.query(Export).filter(Export.id == export_id).first()
+    export_record = db.query(Export).filter(
+        Export.id == export_id,
+        Export.user_id == current_user.id
+    ).first()
     if not export_record:
         raise HTTPException(status_code=404, detail="Export not found")
     
@@ -249,12 +274,14 @@ async def list_exports(
     skip: int = 0,
     limit: int = 10,
     status: str | None = None,
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
 ):
     """
     List all exports with pagination
     """
-    query = db.query(Export)
+    query = db.query(Export).filter(Export.user_id == current_user.id)
     
     if status:
         query = query.filter(Export.status == status)
@@ -280,11 +307,19 @@ async def list_exports(
     }
 
 @router.delete("/{export_id}")
-async def delete_export(export_id: int, db: Session = Depends(get_db)):
+async def delete_export(
+    export_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
+):
     """
     Delete an export and its file
     """
-    export_record = db.query(Export).filter(Export.id == export_id).first()
+    export_record = db.query(Export).filter(
+        Export.id == export_id,
+        Export.user_id == current_user.id
+    ).first()
     if not export_record:
         raise HTTPException(status_code=404, detail="Export not found")
     

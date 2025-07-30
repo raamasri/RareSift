@@ -12,8 +12,10 @@ from pathlib import Path
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate, rate_limit_generous
 from app.services.embedding_service import EmbeddingService
 from app.models.video import Video, Frame
+from app.models.user import User
 
 router = APIRouter()
 
@@ -57,7 +59,9 @@ embedding_service = EmbeddingService()
 @router.post("/text", response_model=SearchResponse)
 async def search_by_text(
     request: TextSearchRequest,
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
 ):
     """
     Search for video frames using natural language text query
@@ -76,6 +80,10 @@ async def search_by_text(
             similarity_threshold=request.similarity_threshold,
             filters=filters_dict
         )
+        
+        # Update user search statistics
+        current_user.search_count += 1
+        db.commit()
         
         # Convert frame paths to URLs
         for result in search_results["results"]:
@@ -105,7 +113,9 @@ async def search_by_image(
     weather: Optional[str] = Form(None),
     speed_min: Optional[float] = Form(None),
     speed_max: Optional[float] = Form(None),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
 ):
     """
     Search for similar video frames using an example image
@@ -141,6 +151,10 @@ async def search_by_image(
             filters=filters_dict
         )
         
+        # Update user search statistics
+        current_user.search_count += 1
+        db.commit()
+        
         # Convert frame paths to URLs
         for result in search_results["results"]:
             if result["frame_path"]:
@@ -169,15 +183,18 @@ async def search_by_image(
 async def get_search_history(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
 ):
     """
     Get search history with pagination
     """
     from app.models.video import Search
     
-    total = db.query(Search).count()
-    searches = db.query(Search).order_by(Search.created_at.desc()).offset(skip).limit(limit).all()
+    # Filter searches by current user
+    total = db.query(Search).filter(Search.user_id == current_user.id).count()
+    searches = db.query(Search).filter(Search.user_id == current_user.id).order_by(Search.created_at.desc()).offset(skip).limit(limit).all()
     
     return {
         "searches": [
@@ -196,13 +213,21 @@ async def get_search_history(
     }
 
 @router.get("/{search_id}")
-async def get_search_details(search_id: int, db: Session = Depends(get_db)):
+async def get_search_details(
+    search_id: int, 
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get details of a specific search
     """
     from app.models.video import Search
     
-    search = db.query(Search).filter(Search.id == search_id).first()
+    search = db.query(Search).filter(
+        Search.id == search_id,
+        Search.user_id == current_user.id
+    ).first()
     if not search:
         raise HTTPException(status_code=404, detail="Search not found")
     
@@ -220,7 +245,11 @@ async def get_search_details(search_id: int, db: Session = Depends(get_db)):
     }
 
 @router.get("/suggestions/filters")
-async def get_filter_suggestions(db: Session = Depends(get_db)):
+async def get_filter_suggestions(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get available filter options from existing data
     """
@@ -261,7 +290,9 @@ async def get_filter_suggestions(db: Session = Depends(get_db)):
 async def get_frame_thumbnail(
     frame_id: int,
     size: int = Query(300, description="Thumbnail size in pixels"),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
 ):
     """
     Get thumbnail image for a specific frame
@@ -310,7 +341,9 @@ async def stream_video(
     video_id: int,
     start: float = Query(0, description="Start time in seconds"),
     duration: float = Query(10, description="Duration in seconds"),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
 ):
     """
     Stream video segment for playback
@@ -339,7 +372,12 @@ async def stream_video(
 
 
 @router.get("/video/{video_id}/info")
-async def get_video_info(video_id: int, db: Session = Depends(get_db)):
+async def get_video_info(
+    video_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get video information for player
     """

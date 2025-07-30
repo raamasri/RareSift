@@ -9,9 +9,12 @@ import time
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate
 from app.models.video import Video
+from app.models.user import User
 from app.services.video_processor import VideoProcessor
 from app.services.embedding_service import EmbeddingService
+from app.tasks import process_video_task
 
 router = APIRouter()
 
@@ -77,13 +80,14 @@ async def process_video_background(video_id: int):
 
 @router.post("/upload", response_model=VideoResponse)
 async def upload_video(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     weather: Optional[str] = Form(None),
     time_of_day: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
     speed_avg: Optional[float] = Form(None),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
 ):
     """
     Upload a video file with metadata
@@ -144,10 +148,14 @@ async def upload_video(
         db.refresh(video)
         print(f"DEBUG: Video refreshed, ID: {video.id}")
         
-        # Start background processing
-        print(f"DEBUG: Adding background task...")
-        background_tasks.add_task(process_video_background, video.id)
-        print(f"DEBUG: Background task added")
+        # Start background processing with Celery
+        print(f"DEBUG: Starting Celery task...")
+        process_video_task.delay(video.id)
+        print(f"DEBUG: Celery task started")
+        
+        # Update user stats
+        current_user.video_upload_count += 1
+        db.commit()
         
         print(f"DEBUG: Creating VideoResponse...")
         response = VideoResponse.model_validate(video)
@@ -165,7 +173,9 @@ async def list_videos(
     skip: int = 0,
     limit: int = 10,
     processed_only: bool = False,
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
 ):
     """
     List all videos with pagination
@@ -184,7 +194,12 @@ async def list_videos(
     )
 
 @router.get("/{video_id}", response_model=VideoResponse)
-async def get_video(video_id: int, db: Session = Depends(get_db)):
+async def get_video(
+    video_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get a specific video by ID
     """
@@ -195,7 +210,12 @@ async def get_video(video_id: int, db: Session = Depends(get_db)):
     return VideoResponse.model_validate(video)
 
 @router.delete("/{video_id}")
-async def delete_video(video_id: int, db: Session = Depends(get_db)):
+async def delete_video(
+    video_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_moderate)
+):
     """
     Delete a video and its associated data
     """
@@ -226,7 +246,12 @@ async def delete_video(video_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to delete video: {str(e)}")
 
 @router.get("/{video_id}/processing-status")
-async def get_processing_status(video_id: int, db: Session = Depends(get_db)):
+async def get_processing_status(
+    video_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limit_generous)
+):
     """
     Get processing status of a video
     """
