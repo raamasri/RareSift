@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
     image: pgvector/pgvector:pg15
     environment:
-      POSTGRES_DB: scenarioseeker
+      POSTGRES_DB: raresift
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -28,7 +26,7 @@ services:
       - ./backend:/app
       - /app/__pycache__
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/scenarioseeker
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/raresift
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=dev-secret-key-change-in-production
     depends_on:

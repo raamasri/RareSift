@@ -15,8 +15,8 @@ pydantic-settings==2.1.0
 httpx==0.25.2
 pillow==10.1.0
 opencv-python==4.8.1.78
-torch==2.1.1
-torchvision==0.16.1
+torch>=2.2.0
+torchvision>=0.17.0
 transformers==4.36.0
 git+https://github.com/openai/CLIP.git
 moviepy==1.0.3
