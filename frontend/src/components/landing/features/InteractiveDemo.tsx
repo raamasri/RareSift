@@ -9,42 +9,119 @@ import {
   CheckCircleIcon 
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import Image from 'next/image'
 
+// Real demo data from processed videos
 const demoQueries = [
-  "Cars turning left in rainy conditions",
-  "Pedestrians crossing at night", 
-  "Emergency vehicle approaching",
-  "Construction zone navigation",
-  "Highway merge scenarios"
+  "cars turning left in intersection",
+  "pedestrians crossing street", 
+  "vehicles in rainy conditions",
+  "urban street scenes",
+  "highway driving footage"
 ]
 
-const mockResults = [
+// Demo metadata - will be loaded from processed videos
+const demoScenarios = [
   {
-    id: 1,
-    title: "Rain_Left_Turn_Scenario_001",
-    timestamp: "00:02:15",
-    confidence: 95,
-    weather: "Heavy Rain",
-    time: "Evening",
-    thumbnail: "bg-gradient-to-br from-blue-400 to-blue-600"
+    query: "cars turning left in intersection",
+    results: [
+      {
+        id: "drive_01_10s",
+        title: "Urban_Intersection_Left_Turn",
+        timestamp: "00:00:10",
+        confidence: 94,
+        video_source: "GH010001.MP4",
+        frame_path: "/demo-assets/frames/drive_01_frame_000.jpg",
+        category: "traffic_maneuvers"
+      },
+      {
+        id: "drive_02_30s", 
+        title: "City_Street_Turn_Scenario",
+        timestamp: "00:00:30",
+        confidence: 89,
+        video_source: "GH010002.MP4", 
+        frame_path: "/demo-assets/frames/drive_02_frame_001.jpg",
+        category: "traffic_maneuvers"
+      },
+      {
+        id: "static_04_30s",
+        title: "Intersection_Camera_View",
+        timestamp: "00:00:30", 
+        confidence: 86,
+        video_source: "GH010032.MP4",
+        frame_path: "/demo-assets/frames/static_04_frame_001.jpg",
+        category: "traffic_maneuvers"
+      }
+    ]
   },
   {
-    id: 2,
-    title: "Urban_Turn_Wet_Road_045",
-    timestamp: "00:01:32",
-    confidence: 92,
-    weather: "Light Rain",
-    time: "Afternoon", 
-    thumbnail: "bg-gradient-to-br from-slate-400 to-slate-600"
+    query: "pedestrians crossing street",
+    results: [
+      {
+        id: "drive_01_30s",
+        title: "Pedestrian_Crosswalk_Scene", 
+        timestamp: "00:00:30",
+        confidence: 91,
+        video_source: "GH010001.MP4",
+        frame_path: "/demo-assets/frames/drive_01_frame_001.jpg",
+        category: "pedestrian_activity"
+      },
+      {
+        id: "drive_02_60s",
+        title: "Urban_Pedestrian_Activity",
+        timestamp: "00:01:00", 
+        confidence: 87,
+        video_source: "GH010002.MP4",
+        frame_path: "/demo-assets/frames/drive_02_frame_002.jpg",
+        category: "pedestrian_activity"
+      }
+    ]
   },
   {
-    id: 3,
-    title: "Intersection_Rain_Left_089",
-    timestamp: "00:04:21",
-    confidence: 88,
-    weather: "Drizzle",
-    time: "Morning",
-    thumbnail: "bg-gradient-to-br from-emerald-400 to-emerald-600"
+    query: "vehicles in rainy conditions", 
+    results: [
+      {
+        id: "drive_01_60s",
+        title: "Wet_Road_Driving_Conditions",
+        timestamp: "00:01:00",
+        confidence: 93,
+        video_source: "GH010001.MP4", 
+        frame_path: "/demo-assets/frames/drive_01_frame_002.jpg",
+        category: "weather_conditions"
+      },
+      {
+        id: "static_03_10s",
+        title: "Rainy_Day_Traffic_Cam",
+        timestamp: "00:00:10",
+        confidence: 88,
+        video_source: "GH010031.MP4",
+        frame_path: "/demo-assets/frames/static_03_frame_000.jpg", 
+        category: "weather_conditions"
+      }
+    ]
+  },
+  {
+    query: "urban street scenes",
+    results: [
+      {
+        id: "drive_02_10s", 
+        title: "City_Street_Navigation",
+        timestamp: "00:00:10",
+        confidence: 92,
+        video_source: "GH010002.MP4",
+        frame_path: "/demo-assets/frames/drive_02_frame_000.jpg",
+        category: "urban_driving"
+      },
+      {
+        id: "static_04_10s",
+        title: "Urban_Traffic_Overview",
+        timestamp: "00:00:10", 
+        confidence: 85,
+        video_source: "GH010032.MP4",
+        frame_path: "/demo-assets/frames/static_04_frame_000.jpg",
+        category: "urban_driving"
+      }
+    ]
   }
 ]
 
@@ -53,6 +130,7 @@ export default function InteractiveDemo() {
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [searchText, setSearchText] = useState('')
+  const [currentResults, setCurrentResults] = useState<any[]>([])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,7 +150,13 @@ export default function InteractiveDemo() {
     setIsSearching(true)
     setShowResults(false)
     
+    // Find matching scenario for current query
+    const scenario = demoScenarios.find(s => s.query === searchText.toLowerCase()) 
+                    || demoScenarios[currentQuery] 
+                    || demoScenarios[0]
+    
     setTimeout(() => {
+      setCurrentResults(scenario.results)
       setIsSearching(false)
       setShowResults(true)
     }, 1500)
@@ -81,6 +165,7 @@ export default function InteractiveDemo() {
   const resetDemo = () => {
     setShowResults(false)
     setIsSearching(false)
+    setCurrentResults([])
     setCurrentQuery((prev) => (prev + 1) % demoQueries.length)
   }
 
@@ -167,7 +252,7 @@ export default function InteractiveDemo() {
                       <div className="flex items-center gap-3">
                         <CheckCircleIcon className="h-6 w-6 text-green-500" />
                         <span className="text-lg font-medium text-gray-900 dark:text-white">
-                          Found {mockResults.length} matching scenarios in 0.3 seconds
+                          Found {currentResults.length} matching scenarios in 0.3 seconds
                         </span>
                       </div>
                       <button
@@ -180,16 +265,25 @@ export default function InteractiveDemo() {
 
                     {/* Results Grid */}
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {mockResults.map((result, index) => (
+                      {currentResults.map((result, index) => (
                         <div
                           key={result.id}
                           className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                           style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          {/* Thumbnail */}
-                          <div className={`h-32 rounded-lg mb-3 ${result.thumbnail} flex items-center justify-center relative overflow-hidden`}>
-                            <PlayIcon className="h-8 w-8 text-white opacity-80 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          {/* Real Video Thumbnail */}
+                          <div className="h-32 rounded-lg mb-3 relative overflow-hidden bg-gray-200 dark:bg-gray-600">
+                            <Image
+                              src={result.frame_path}
+                              alt={result.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                            <PlayIcon className="absolute inset-0 h-8 w-8 text-white opacity-80 group-hover:opacity-100 transition-opacity m-auto" />
+                            
+                            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                               {result.timestamp}
                             </div>
                             <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
@@ -202,8 +296,8 @@ export default function InteractiveDemo() {
                             {result.title}
                           </h3>
                           <div className="space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                            <div>Weather: {result.weather}</div>
-                            <div>Time: {result.time}</div>
+                            <div>Source: {result.video_source}</div>
+                            <div>Category: {result.category.replace('_', ' ')}</div>
                           </div>
                         </div>
                       ))}
@@ -213,7 +307,7 @@ export default function InteractiveDemo() {
                     <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                       <button className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-medium transition-colors">
                         <ArrowDownTrayIcon className="h-5 w-5" />
-                        Export Selected (3)
+                        Export Selected ({currentResults.length})
                       </button>
                       <Link
                         href="/app"
