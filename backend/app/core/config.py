@@ -3,6 +3,9 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
+    # Environment
+    environment: str = "development"  # development, production
+    
     # Database
     database_url: str = "postgresql://postgres:postgres@localhost:5432/raresift"
     

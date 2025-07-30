@@ -25,14 +25,31 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
+      - uploads_data:/app/uploads
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/raresift
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=dev-secret-key-change-in-production
+      - ENVIRONMENT=development
     depends_on:
       - postgres
       - redis
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/raresift
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - ENVIRONMENT=development
+    depends_on:
+      - postgres
+      - redis
+    command: celery -A app.tasks.celery_app worker --loglevel=info
 
   frontend:
     build: ./frontend
@@ -50,4 +67,5 @@ services:
 
 volumes:
   postgres_data:
-  redis_data: 
+  redis_data:
+  uploads_data: 

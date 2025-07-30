@@ -7,9 +7,18 @@ import {
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import { useAuth } from '@/contexts/auth-context'
+import { useRouter } from 'next/navigation'
 
-export function Header() {
+export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const { user, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
 
   return (
     <header className="rs-gradient-subtle border-b border-slate-200/60 backdrop-blur-sm sticky top-0 z-50">
@@ -77,8 +86,8 @@ export function Header() {
               >
                 <UserCircleIcon className="h-6 w-6 text-slate-600" />
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-semibold text-slate-900">Admin User</p>
-                  <p className="text-xs text-slate-500">admin@company.com</p>
+                  <p className="text-sm font-semibold text-slate-900">{user?.full_name || 'User'}</p>
+                  <p className="text-xs text-slate-500">{user?.email}</p>
                 </div>
                 <ChevronDownIcon className="h-4 w-4 text-slate-400" />
               </button>
@@ -87,14 +96,22 @@ export function Header() {
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl rs-shadow-lg border border-slate-200/60 py-2 z-50">
                   <div className="px-4 py-2 border-b border-slate-100">
-                    <p className="text-sm font-semibold text-slate-900">Admin User</p>
-                    <p className="text-xs text-slate-500">admin@company.com</p>
+                    <p className="text-sm font-semibold text-slate-900">{user?.full_name || 'User'}</p>
+                    <p className="text-xs text-slate-500">{user?.email}</p>
+                    {user?.company && (
+                      <p className="text-xs text-slate-400">{user.company}</p>
+                    )}
                   </div>
                   <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Profile Settings</a>
                   <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">API Keys</a>
                   <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Usage & Billing</a>
                   <div className="border-t border-slate-100 mt-2"></div>
-                  <a href="#" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">Sign Out</a>
+                  <button 
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               )}
             </div>

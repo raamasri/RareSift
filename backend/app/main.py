@@ -1,8 +1,9 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from fastapi.middleware.base import BaseHTTPMiddleware
 import traceback
 import logging
 
@@ -12,7 +13,8 @@ from fastapi import APIRouter
 api_router = APIRouter()
 
 # Import and include individual routers
-from app.api.v1 import videos, search, export
+from app.api.v1 import videos, search, export, auth
+api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(videos.router, prefix="/videos", tags=["videos"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])  
 api_router.include_router(export.router, prefix="/export", tags=["export"])
@@ -22,6 +24,21 @@ from app.core.config import settings
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        if settings.environment == "production":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        
+        return response
+
 app = FastAPI(
     title="RareSift API",
     description="AI-powered AV scenario search and analysis",
@@ -29,18 +46,29 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# CORS middleware
+# CORS middleware - configure for production
+allowed_origins = [
+    "http://localhost:3000",  # Development frontend
+    "http://127.0.0.1:3000",
+    "https://raresift.com",   # Production domain
+    "https://www.raresift.com"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins if settings.environment == "production" else ["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Create uploads directory
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Create uploads directory structure
 os.makedirs(settings.upload_dir, exist_ok=True)
 os.makedirs(os.path.join(settings.upload_dir, "frames"), exist_ok=True)
+os.makedirs(os.path.join(settings.upload_dir, "exports"), exist_ok=True)
 
 # Mount static files for serving uploaded content
 app.mount("/static", StaticFiles(directory=settings.upload_dir), name="static")

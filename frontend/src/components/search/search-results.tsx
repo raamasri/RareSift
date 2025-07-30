@@ -247,7 +247,7 @@ export function SearchResults({ results }: SearchResultsProps) {
               {/* Enhanced Frame Image */}
               <div className="relative aspect-video bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
                 <Image
-                  src={`http://localhost:8000${result.frame_url || `/static/frames/video_${result.video_id}_frame_000000.jpg`}`}
+                  src={videoPreviewApi.getFrameThumbnail(result.frame_id, 400)}
                   alt={`Frame at ${formatTimestamp(result.timestamp)}`}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -465,12 +465,36 @@ export function SearchResults({ results }: SearchResultsProps) {
               </p>
               
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2">
+                <button 
+                  onClick={async () => {
+                    try {
+                      const exportResponse = await exportApi.create(Array.from(selectedFrames), 'dataset')
+                      setShowExportOptions(false)
+                      // You could show a toast notification here
+                      console.log('Export started:', exportResponse)
+                    } catch (error) {
+                      console.error('Export failed:', error)
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2"
+                >
                   <ArrowDownTrayIcon className="h-4 w-4" />
                   <span>Export as Dataset (JSON + Images)</span>
                 </button>
                 
-                <button className="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2">
+                <button 
+                  onClick={async () => {
+                    try {
+                      const exportResponse = await exportApi.create(Array.from(selectedFrames), 'zip')
+                      setShowExportOptions(false)
+                      // You could show a toast notification here
+                      console.log('Export started:', exportResponse)
+                    } catch (error) {
+                      console.error('Export failed:', error)
+                    }
+                  }}
+                  className="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2"
+                >
                   <ArrowDownTrayIcon className="h-4 w-4" />
                   <span>Export as ZIP Archive</span>
                 </button>
