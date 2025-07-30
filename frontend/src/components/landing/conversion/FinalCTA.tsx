@@ -27,7 +27,7 @@ export default function FinalCTA() {
           </h2>
           
           <p className="mt-6 text-xl leading-8 text-gray-200 max-w-2xl mx-auto">
-            Join hundreds of autonomous vehicle teams already using RareSift to accelerate their development cycles.
+            Built for autonomous vehicle teams who need precise scenario discovery and faster development cycles.
           </p>
 
           {/* Value Props */}
@@ -72,16 +72,28 @@ export default function FinalCTA() {
             </button>
           </div>
 
-          {/* Trust Signals */}
+          {/* Technology Highlights */}
           <div className="mt-12 pt-8 border-t border-white/20">
             <p className="text-sm text-gray-300 mb-6">
-              Trusted by engineering teams at leading AV companies
+              Enterprise-grade technology stack
             </p>
-            <div className="flex items-center justify-center gap-8 opacity-60">
-              <div className="h-8 w-24 bg-white/20 rounded"></div>
-              <div className="h-8 w-20 bg-white/20 rounded"></div>
-              <div className="h-8 w-28 bg-white/20 rounded"></div>
-              <div className="h-8 w-16 bg-white/20 rounded"></div>
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-300">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400"></div>
+                OpenAI CLIP
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-400"></div>
+                PostgreSQL
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-purple-400"></div>
+                Vector Search
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-orange-400"></div>
+                FastAPI
+              </div>
             </div>
           </div>
 

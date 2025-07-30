@@ -231,7 +231,7 @@ export default function PricingSection() {
           </h3>
           <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
             See how much time and money RareSift can save your team. 
-            Most customers see 10x ROI within the first quarter.
+            Calculate potential savings based on your data volume and team size.
           </p>
           <Link
             href="/app#roi"

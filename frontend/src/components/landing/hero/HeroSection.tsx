@@ -56,19 +56,19 @@ export default function HeroSection() {
               Our AI searches through terabytes of autonomous vehicle data to find exactly what you need.
             </p>
 
-            {/* Stats */}
+            {/* Key Features */}
             <div className="flex gap-8 mb-8">
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">90%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Time Saved</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">512D</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Vector Search</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">1TB+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Data Processed</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">1/sec</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Frame Rate</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">10K+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Scenarios Found</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">100TB</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Scale Support</div>
               </div>
             </div>
 
@@ -90,13 +90,22 @@ export default function HeroSection() {
               </button>
             </div>
 
-            {/* Trust Indicators */}
+            {/* Technology Stack */}
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Trusted by leading AV companies</p>
-              <div className="flex items-center gap-6 opacity-60">
-                <div className="h-8 w-20 bg-gray-400 dark:bg-gray-600 rounded"></div>
-                <div className="h-8 w-24 bg-gray-400 dark:bg-gray-600 rounded"></div>
-                <div className="h-8 w-16 bg-gray-400 dark:bg-gray-600 rounded"></div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Built with enterprise-grade technology</p>
+              <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  OpenAI CLIP
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  PostgreSQL
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                  pgvector
+                </div>
               </div>
             </div>
           </div>
@@ -133,7 +142,7 @@ export default function HeroSection() {
                   <div className="text-center py-2">
                     <div className="inline-flex items-center text-sm text-green-600 dark:text-green-400 font-medium">
                       <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                      Found 847 matching scenarios in 0.3s
+                      AI-powered semantic search in progress...
                     </div>
                   </div>
                 </div>

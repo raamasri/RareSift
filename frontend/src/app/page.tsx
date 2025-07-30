@@ -4,6 +4,7 @@ import LandingHeader from '@/components/landing/LandingHeader'
 import HeroSection from '@/components/landing/hero/HeroSection'
 import FeatureGrid from '@/components/landing/features/FeatureGrid'
 import InteractiveDemo from '@/components/landing/features/InteractiveDemo'
+import CompetitiveDifferentiation from '@/components/landing/features/CompetitiveDifferentiation'
 import StatsSection from '@/components/landing/social-proof/StatsSection'
 import TestimonialCarousel from '@/components/landing/social-proof/TestimonialCarousel'
 import PricingSection from '@/components/landing/pricing/PricingSection'
@@ -23,6 +24,8 @@ export default function LandingPage() {
       <section id="demo">
         <InteractiveDemo />
       </section>
+
+      <CompetitiveDifferentiation />
       
       <StatsSection />
       

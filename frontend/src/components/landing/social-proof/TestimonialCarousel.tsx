@@ -3,36 +3,30 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from '@heroicons/react/24/solid'
 
-const testimonials = [
+const capabilities = [
   {
     id: 1,
-    name: 'Sarah Chen',
-    role: 'Senior AV Engineer',
-    company: 'TechDrive',
-    image: '/api/placeholder/100/100',
-    quote: 'RareSift cut our scenario discovery time by 90%. What used to take days now takes minutes. The natural language search is incredibly intuitive.',
-    rating: 5,
-    metric: '90% time saved'
+    title: 'Reduce Discovery Time by 90%',
+    icon: '⚡',
+    description: 'Transform days of manual video review into minutes of AI-powered search. Our natural language processing understands exactly what scenarios you need.',
+    benefit: 'Save weeks of engineering time',
+    use_case: 'Instead of manually scrubbing through hours of footage, simply ask: "Show me cars turning left in rainy conditions"'
   },
   {
     id: 2,
-    name: 'Marcus Rodriguez', 
-    role: 'Head of Data Science',
-    company: 'AutonoLogic',
-    image: '/api/placeholder/100/100',
-    quote: 'The frame-level precision is game-changing. We can find exact moments where edge cases occur, making our training data exponentially more valuable.',
-    rating: 5,
-    metric: '10x faster edge case discovery'
+    title: 'Frame-Level Precision Discovery',
+    icon: '🎯',
+    description: 'Pinpoint exact moments where critical scenarios occur. Find edge cases and safety events with unprecedented accuracy for training data.',
+    benefit: 'Build better AI models faster',
+    use_case: 'Locate the exact 3-second window where a pedestrian unexpectedly enters the roadway'
   },
   {
     id: 3,
-    name: 'Dr. Emily Watson',
-    role: 'Research Director',
-    company: 'Future Mobility Lab',
-    image: '/api/placeholder/100/100',
-    quote: 'Handling 100TB+ of AV data was a nightmare until RareSift. Now our entire team can search through everything instantly. Absolute game changer.',
-    rating: 5,
-    metric: '100TB+ data processed'
+    title: 'Scale to 100TB+ Datasets',
+    icon: '📊',
+    description: 'Handle massive autonomous vehicle datasets efficiently. Our platform is built to process and search through enterprise-scale data volumes.',
+    benefit: 'No limits on your data growth',
+    use_case: 'Search across months of continuous driving data from your entire fleet simultaneously'
   }
 ]
 
@@ -44,19 +38,19 @@ export default function TestimonialCarousel() {
     if (!isAutoPlaying) return
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % testimonials.length)
+      setCurrentIndex((prev) => (prev + 1) % capabilities.length)
     }, 5000)
 
     return () => clearInterval(interval)
   }, [isAutoPlaying])
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+    setCurrentIndex((prev) => (prev - 1 + capabilities.length) % capabilities.length)
     setIsAutoPlaying(false)
   }
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length)
+    setCurrentIndex((prev) => (prev + 1) % capabilities.length)
     setIsAutoPlaying(false)
   }
 
@@ -65,13 +59,13 @@ export default function TestimonialCarousel() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-base font-semibold leading-7 text-indigo-600 dark:text-indigo-400">
-            Customer Stories
+            Core Capabilities
           </h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-            Trusted by leading AV teams
+            Built for AV teams like yours
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            See how autonomous vehicle companies are accelerating their development with RareSift
+            Discover how RareSift can transform your autonomous vehicle development process
           </p>
         </div>
 
@@ -81,39 +75,37 @@ export default function TestimonialCarousel() {
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="min-w-full p-8 sm:p-12">
+              {capabilities.map((capability) => (
+                <div key={capability.id} className="min-w-full p-8 sm:p-12">
                   <div className="flex flex-col items-center text-center">
-                    {/* Rating */}
-                    <div className="flex items-center mb-6">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <StarIcon key={i} className="h-5 w-5 text-yellow-400" />
-                      ))}
+                    {/* Icon */}
+                    <div className="text-6xl mb-6">
+                      {capability.icon}
                     </div>
 
-                    {/* Quote */}
-                    <blockquote className="text-xl font-medium text-gray-900 dark:text-white mb-8 max-w-3xl">
-                      "{testimonial.quote}"
-                    </blockquote>
+                    {/* Title */}
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      {capability.title}
+                    </h3>
 
-                    {/* Profile */}
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                        {testimonial.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {testimonial.name}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {testimonial.role}, {testimonial.company}
-                        </div>
-                      </div>
+                    {/* Description */}
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-2xl">
+                      {capability.description}
+                    </p>
+
+                    {/* Use Case Example */}
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 mb-6 max-w-2xl">
+                      <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100 mb-2">
+                        Real-world example:
+                      </p>
+                      <p className="text-sm text-indigo-700 dark:text-indigo-300 italic">
+                        "{capability.use_case}"
+                      </p>
                     </div>
 
-                    {/* Metric */}
-                    <div className="mt-6 inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/20 px-4 py-2 text-sm font-medium text-green-800 dark:text-green-400">
-                      ✓ {testimonial.metric}
+                    {/* Benefit */}
+                    <div className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/20 px-6 py-3 text-sm font-medium text-green-800 dark:text-green-400">
+                      ✓ {capability.benefit}
                     </div>
                   </div>
                 </div>
@@ -137,7 +129,7 @@ export default function TestimonialCarousel() {
 
           {/* Dots Indicator */}
           <div className="flex justify-center mt-8 gap-2">
-            {testimonials.map((_, index) => (
+            {capabilities.map((_, index) => (
               <button
                 key={index}
                 onClick={() => {

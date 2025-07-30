@@ -67,10 +67,10 @@ function AnimatedStat({ value, suffix, label, prefix = '', duration = 2000 }: St
 }
 
 const stats = [
-  { value: 847, suffix: 'K+', label: 'Scenarios Found', prefix: '' },
-  { value: 120, suffix: 'TB+', label: 'Data Processed', prefix: '' },
-  { value: 90, suffix: '%', label: 'Time Saved', prefix: '' },
-  { value: 500, suffix: '+', label: 'AV Engineers', prefix: '' }
+  { value: 512, suffix: '', label: 'Vector Dimensions', prefix: '' },
+  { value: 1, suffix: '/sec', label: 'Frame Processing', prefix: '' },
+  { value: 90, suffix: '%', label: 'Time Reduction', prefix: 'Up to ' },
+  { value: 100, suffix: 'TB+', label: 'Dataset Capacity', prefix: '' }
 ]
 
 export default function StatsSection() {
@@ -79,13 +79,13 @@ export default function StatsSection() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-base font-semibold leading-7 text-indigo-600 dark:text-indigo-400">
-            Impact by Numbers
+            Technical Specifications
           </h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-            Accelerating AV development worldwide
+            Built for scale and precision
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            Real metrics from teams using RareSift to power their autonomous vehicle research and development
+            Enterprise-grade AI infrastructure designed for autonomous vehicle data processing
           </p>
         </div>
 
@@ -102,11 +102,11 @@ export default function StatsSection() {
           ))}
         </div>
 
-        {/* Live Activity Indicator */}
+        {/* Technology Info */}
         <div className="mt-16 text-center">
-          <div className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/20 px-6 py-3 text-sm font-medium text-green-800 dark:text-green-400">
-            <div className="h-2 w-2 rounded-full bg-green-500 mr-3 animate-pulse"></div>
-            Live: 23 teams searching scenarios right now
+          <div className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/20 px-6 py-3 text-sm font-medium text-blue-800 dark:text-blue-400">
+            <div className="h-2 w-2 rounded-full bg-blue-500 mr-3"></div>
+            Powered by OpenAI CLIP and PostgreSQL pgvector
           </div>
         </div>
       </div>
