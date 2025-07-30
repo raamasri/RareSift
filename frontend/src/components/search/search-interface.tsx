@@ -9,7 +9,7 @@ import clsx from 'clsx'
 import { logStore } from '@/components/debug/debug-console'
 
 interface SearchInterfaceProps {
-  onSearchResults: (results: any) => void
+  onSearchResults?: (results: any) => void
 }
 
 interface SearchFilters {
@@ -26,10 +26,113 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
   const [query, setQuery] = useState('')
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestedQueries, setSuggestedQueries] = useState<string[]>([])
   const [filters, setFilters] = useState<SearchFilters>({
     similarity_threshold: 0.2,
     limit: 10
   })
+
+  // Smart search suggestions for AV scenarios
+  const commonScenarios = [
+    // Pedestrian scenarios
+    "pedestrian crossing at night",
+    "child running into street",
+    "pedestrian with stroller",
+    "elderly person crossing slowly",
+    "pedestrian on phone distracted",
+    "group of pedestrians jaywalking",
+    
+    // Vehicle interactions
+    "aggressive lane change without signal",
+    "vehicle cutting in close",
+    "truck making wide turn",
+    "emergency vehicle approaching",
+    "motorcycle lane splitting",
+    "vehicle running red light",
+    
+    // Weather conditions
+    "heavy rain low visibility",
+    "driving in snow storm",
+    "fog reducing visibility",
+    "sun glare blocking view",
+    "ice on road surface",
+    "hail storm conditions",
+    
+    // Construction and obstacles
+    "construction zone with cones",
+    "road work with lane shifts",
+    "fallen tree blocking road",
+    "pothole in driving lane",
+    "debris on highway",
+    "bridge construction barriers",
+    
+    // Traffic scenarios
+    "traffic jam stop and go",
+    "highway merge conflict",
+    "roundabout navigation",
+    "school bus with flashing lights",
+    "double parked vehicle",
+    "vehicle backing out of driveway",
+    
+    // Edge cases
+    "animal crossing road at night",
+    "cyclist in vehicle blind spot",
+    "rollover accident scene",
+    "vehicle stalled in traffic",
+    "emergency responder on scene",
+    "street festival with crowds"
+  ]
+
+  const getSmartSuggestions = (input: string) => {
+    if (input.length < 2) return []
+    
+    const matchingScenarios = commonScenarios.filter(scenario =>
+      scenario.toLowerCase().includes(input.toLowerCase())
+    )
+    
+    // Also add contextual suggestions based on keywords
+    const contextualSuggestions = []
+    const keywords = input.toLowerCase().split(' ')
+    
+    if (keywords.includes('pedestrian') || keywords.includes('person')) {
+      contextualSuggestions.push(
+        "pedestrian near intersection",
+        "pedestrian in crosswalk",
+        "person with shopping cart"
+      )
+    }
+    
+    if (keywords.includes('night') || keywords.includes('dark')) {
+      contextualSuggestions.push(
+        "night driving with headlights",
+        "street lights illuminated",
+        "dark road no lighting"
+      )
+    }
+    
+    if (keywords.includes('rain') || keywords.includes('wet')) {
+      contextualSuggestions.push(
+        "wet road surface reflection",
+        "windshield wipers active",
+        "standing water on road"
+      )
+    }
+    
+    if (keywords.includes('construction')) {
+      contextualSuggestions.push(
+        "construction workers visible",
+        "orange traffic cones",
+        "lane closure signs"
+      )
+    }
+    
+    // Combine and deduplicate
+    const allSuggestions = [...matchingScenarios, ...contextualSuggestions]
+    const uniqueSuggestions = [...new Set(allSuggestions)]
+    
+    return uniqueSuggestions.slice(0, 8) // Limit to 8 suggestions
+  }
 
   // Get filter suggestions
   const { data: filterSuggestions } = useQuery({
@@ -54,7 +157,7 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
         searchTime: data.search_time_ms,
         resultCount: data.results.length
       })
-      onSearchResults(data)
+      onSearchResults?.(data)
     },
     onError: (error: any, variables) => {
       logStore.addLog('error', 'Search', `Text search failed: ${error.message}`, {
@@ -80,7 +183,7 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
         searchTime: data.search_time_ms,
         resultCount: data.results.length
       })
-      onSearchResults(data)
+      onSearchResults?.(data)
     },
     onError: (error: any) => {
       logStore.addLog('error', 'Search', `Image search failed: ${error.message}`, {
@@ -137,6 +240,19 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
   }
 
   const isLoading = textSearchMutation.isPending || imageSearchMutation.isPending
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    const suggestions = getSmartSuggestions(value)
+    setSuggestedQueries(suggestions)
+    setShowSuggestions(suggestions.length > 0 && value.length > 1)
+  }
+
+  const selectSuggestion = (suggestion: string) => {
+    setQuery(suggestion)
+    setShowSuggestions(false)
+    setSuggestedQueries([])
+  }
 
   return (
     <div className="space-y-8">
@@ -211,16 +327,47 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
                   Natural Language Query
                 </label>
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
                   <input
                     type="text"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => handleQueryChange(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleTextSearch()}
+                    onFocus={() => query.length > 1 && setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow clicking suggestions
                     placeholder="Describe the scenario... (e.g., 'pedestrian crossing at night', 'car turning left in rain')"
-                    className="rs-input pl-12 pr-4 py-4 text-base"
+                    className="rs-input pl-12 pr-4 py-4 text-base relative z-0"
                     disabled={isLoading}
                   />
+                  
+                  {/* Smart Suggestions Dropdown */}
+                  {showSuggestions && suggestedQueries.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                      <div className="p-2">
+                        <div className="text-xs font-semibold text-gray-500 mb-2 px-2">
+                          💡 Smart Suggestions
+                        </div>
+                        {suggestedQueries.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => selectSuggestion(suggestion)}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                              <span>{suggestion}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="border-t border-gray-100 p-2 bg-gray-50 rounded-b-xl">
+                        <div className="text-xs text-gray-500 text-center">
+                          🤖 AI-powered suggestions based on common AV scenarios
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500">
                   Use natural language to describe what you're looking for in the driving footage

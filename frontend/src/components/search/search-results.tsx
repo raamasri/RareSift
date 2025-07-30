@@ -11,7 +11,7 @@ import {
   PlayIcon,
   FilmIcon
 } from '@heroicons/react/24/outline'
-import { SearchResponse, SearchResult, videoPreviewApi } from '@/lib/api'
+import { SearchResponse, SearchResult, videoPreviewApi, exportApi } from '@/lib/api'
 import { formatDistanceToNow } from 'date-fns'
 import clsx from 'clsx'
 import VideoPlayer from '@/components/video/video-player'

@@ -185,7 +185,7 @@ export function VideoList() {
                           {video.width}×{video.height}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {formatFileSize(video.file_size)}
+                          {video.file_size ? formatFileSize(video.file_size) : 'Unknown size'}
                         </div>
                         <div className="text-xs text-gray-500">
                           {video.fps} fps
@@ -303,7 +303,7 @@ export function VideoList() {
                     </div>
                     <div>
                       <dt className="text-gray-500">File Size</dt>
-                      <dd className="font-medium">{formatFileSize(selectedVideo.file_size)}</dd>
+                      <dd className="font-medium">{selectedVideo.file_size ? formatFileSize(selectedVideo.file_size) : 'Unknown size'}</dd>
                     </div>
                     <div>
                       <dt className="text-gray-500">Processing Status</dt>

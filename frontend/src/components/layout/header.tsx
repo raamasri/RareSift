@@ -10,7 +10,11 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 
-export default function Header() {
+interface HeaderProps {
+  onNavigate?: (tab: string) => void
+}
+
+export default function Header({ onNavigate }: HeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -74,7 +78,11 @@ export default function Header() {
             </button>
 
             {/* Settings */}
-            <button className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-xl transition-all duration-200">
+            <button 
+              onClick={() => onNavigate?.('settings')}
+              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-xl transition-all duration-200"
+              title="Settings"
+            >
               <Cog6ToothIcon className="h-5 w-5" />
             </button>
 
@@ -102,9 +110,33 @@ export default function Header() {
                       <p className="text-xs text-slate-400">{user.company}</p>
                     )}
                   </div>
-                  <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Profile Settings</a>
-                  <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">API Keys</a>
-                  <a href="#" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Usage & Billing</a>
+                  <button
+                    onClick={() => {
+                      onNavigate?.('settings')
+                      setShowUserMenu(false)
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    Profile Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      onNavigate?.('settings')
+                      setShowUserMenu(false)
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    API Keys
+                  </button>
+                  <button
+                    onClick={() => {
+                      onNavigate?.('analytics')
+                      setShowUserMenu(false)
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    Usage & Analytics
+                  </button>
                   <div className="border-t border-slate-100 mt-2"></div>
                   <button 
                     onClick={handleLogout}

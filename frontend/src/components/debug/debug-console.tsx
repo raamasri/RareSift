@@ -81,11 +81,11 @@ export const createLoggedApi = () => {
   const originalGet = api.get
   const originalDelete = api.delete
 
-  api.post = async (...args) => {
+  api.post = async (...args): Promise<any> => {
     const [url, data] = args
     logStore.addLog('info', 'API', `POST ${url}`, { data })
     try {
-      const response = await originalPost.apply(api, args as any)
+      const response = await originalPost.apply(api, args as any) as any
       logStore.addLog('success', 'API', `POST ${url} - Success`, { 
         status: response.status,
         data: response.data 
@@ -101,11 +101,11 @@ export const createLoggedApi = () => {
     }
   }
 
-  api.get = async (...args) => {
+  api.get = async (...args): Promise<any> => {
     const [url] = args
     logStore.addLog('info', 'API', `GET ${url}`)
     try {
-      const response = await originalGet.apply(api, args as any)
+      const response = await originalGet.apply(api, args as any) as any
       logStore.addLog('success', 'API', `GET ${url} - Success`, { 
         status: response.status 
       })
@@ -120,11 +120,11 @@ export const createLoggedApi = () => {
     }
   }
 
-  api.delete = async (...args) => {
+  api.delete = async (...args): Promise<any> => {
     const [url] = args
     logStore.addLog('info', 'API', `DELETE ${url}`)
     try {
-      const response = await originalDelete.apply(api, args as any)
+      const response = await originalDelete.apply(api, args as any) as any
       logStore.addLog('success', 'API', `DELETE ${url} - Success`, { 
         status: response.status 
       })
