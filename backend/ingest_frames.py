@@ -67,17 +67,33 @@ class FrameIngestionPipeline:
         self.SessionLocal = Session(bind=engine)
         
     def parse_frame_filename(self, frame_path: Path) -> Dict:
-        """Extract metadata from frame filename"""
-        # Example: driving_camera_gh010001_frame_240.jpg
+        """Extract metadata from frame filename - handles multiple naming patterns"""
         stem = frame_path.stem
         parts = stem.split('_')
         
-        if len(parts) < 4:
-            raise ValueError(f"Invalid frame filename format: {frame_path.name}")
+        # Handle different naming patterns:
+        # Pattern 1: driving_camera_gh010001_frame_240.jpg
+        # Pattern 2: drive_01_frame_000.jpg  
+        # Pattern 3: static_04_frame_001.jpg
+        # Pattern 4: static_camera_gh010031_frame_001.jpg
         
-        camera_type = f"{parts[0]}_{parts[1]}"  # "driving_camera"
-        video_id = parts[2].upper()  # "GH010001"
-        frame_number = int(parts[4])  # 240
+        if len(parts) >= 5 and parts[0] in ['driving', 'static'] and parts[1] == 'camera':
+            # Pattern 1 & 4: driving_camera_gh010001_frame_240.jpg
+            camera_type = f"{parts[0]}_camera"
+            video_id = parts[2].upper()
+            frame_number = int(parts[4])
+        elif len(parts) >= 4 and parts[0] == 'drive':
+            # Pattern 2: drive_01_frame_000.jpg -> driving_camera
+            camera_type = "driving_camera"
+            video_id = f"DRIVE{parts[1].zfill(2)}"  # drive_01 -> DRIVE01
+            frame_number = int(parts[3])
+        elif len(parts) >= 4 and parts[0] == 'static':
+            # Pattern 3: static_04_frame_001.jpg -> static_camera
+            camera_type = "static_camera"
+            video_id = f"STATIC{parts[1].zfill(2)}"  # static_04 -> STATIC04
+            frame_number = int(parts[3])
+        else:
+            raise ValueError(f"Unknown frame filename format: {frame_path.name}")
         
         return {
             "camera_type": camera_type,
@@ -227,8 +243,15 @@ class FrameIngestionPipeline:
         """Get all extracted frame paths"""
         frame_paths = []
         
-        # Get all driving camera frames
-        for pattern in ["driving_camera_*.jpg", "static_camera_*.jpg"]:
+        # Get all frame patterns
+        patterns = [
+            "driving_camera_*.jpg",  # driving_camera_gh010001_frame_240.jpg
+            "static_camera_*.jpg",   # static_camera_gh010031_frame_001.jpg
+            "drive_*.jpg",           # drive_01_frame_000.jpg
+            "static_*.jpg"           # static_04_frame_001.jpg
+        ]
+        
+        for pattern in patterns:
             frame_paths.extend(self.frames_dir.glob(pattern))
         
         # Sort by filename for consistent processing order

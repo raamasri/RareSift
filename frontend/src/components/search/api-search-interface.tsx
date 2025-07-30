@@ -322,7 +322,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <span>3,648 Frames Indexed</span>
+            <span>4,985 Frames Indexed</span>
           </div>
         </div>
         {error && (
@@ -419,7 +419,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Search through 3,648 indexed frames from 9 driving camera videos
+                  Search through 4,985 indexed frames from 22 videos (9 driving + 13 static cameras)
                 </p>
               </div>
               
@@ -500,7 +500,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Upload an image to find similar frames in your 3,648 indexed video frames
+                  Upload an image to find similar frames in your 4,985 indexed video frames from both driving and static cameras
                 </p>
               </div>
             </div>
@@ -641,7 +641,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
               <div className="flex items-center space-x-4 text-xs text-slate-400 dark:text-slate-500">
                 <span>Database Search</span>
                 <span>•</span>
-                <span>3,648 frames indexed</span>
+                <span>4,985 frames indexed</span>
                 <span>•</span>
                 <span>CLIP embeddings</span>
               </div>

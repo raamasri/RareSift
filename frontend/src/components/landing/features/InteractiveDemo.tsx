@@ -154,7 +154,7 @@ export default function InteractiveDemo() {
                   <div className="text-gray-300 dark:text-gray-600">•</div>
                   <div>Search ID: {searchResults.search_id}</div>
                   <div className="text-gray-300 dark:text-gray-600">•</div>
-                  <div>3,648 frames indexed</div>
+                  <div>4,985 frames indexed</div>
                 </div>
               </div>
             </div>
