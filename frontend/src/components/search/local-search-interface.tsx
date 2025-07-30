@@ -11,21 +11,27 @@ import drive01Frame001 from '@/assets/demo-frames/drive_01_frame_001.jpg'
 import drive01Frame002 from '@/assets/demo-frames/drive_01_frame_002.jpg'
 import drive01Frame003 from '@/assets/demo-frames/drive_01_frame_003.jpg'
 import drive01Frame004 from '@/assets/demo-frames/drive_01_frame_004.jpg'
+import drive01Frame005 from '@/assets/demo-frames/drive_01_frame_005.jpg'
+import drive01Frame006 from '@/assets/demo-frames/drive_01_frame_006.jpg'
+import drive01Frame007 from '@/assets/demo-frames/drive_01_frame_007.jpg'
 import drive02Frame000 from '@/assets/demo-frames/drive_02_frame_000.jpg'
 import drive02Frame001 from '@/assets/demo-frames/drive_02_frame_001.jpg'
 import drive02Frame002 from '@/assets/demo-frames/drive_02_frame_002.jpg'
 import drive02Frame003 from '@/assets/demo-frames/drive_02_frame_003.jpg'
 import drive02Frame004 from '@/assets/demo-frames/drive_02_frame_004.jpg'
-import static01Frame000 from '@/assets/demo-frames/static_01_frame_000.jpg'
-import static01Frame001 from '@/assets/demo-frames/static_01_frame_001.jpg'
-import static01Frame002 from '@/assets/demo-frames/static_01_frame_002.jpg'
-import static01Frame003 from '@/assets/demo-frames/static_01_frame_003.jpg'
-import static01Frame004 from '@/assets/demo-frames/static_01_frame_004.jpg'
-import static02Frame000 from '@/assets/demo-frames/static_02_frame_000.jpg'
-import static02Frame001 from '@/assets/demo-frames/static_02_frame_001.jpg'
-import static02Frame002 from '@/assets/demo-frames/static_02_frame_002.jpg'
-import static02Frame003 from '@/assets/demo-frames/static_02_frame_003.jpg'
-import static02Frame004 from '@/assets/demo-frames/static_02_frame_004.jpg'
+import drive02Frame005 from '@/assets/demo-frames/drive_02_frame_005.jpg'
+import drive02Frame006 from '@/assets/demo-frames/drive_02_frame_006.jpg'
+import drive02Frame007 from '@/assets/demo-frames/drive_02_frame_007.jpg'
+import drive03Frame000 from '@/assets/demo-frames/drive_03_frame_000.jpg'
+import drive03Frame001 from '@/assets/demo-frames/drive_03_frame_001.jpg'
+import drive03Frame002 from '@/assets/demo-frames/drive_03_frame_002.jpg'
+import drive03Frame003 from '@/assets/demo-frames/drive_03_frame_003.jpg'
+import drive03Frame004 from '@/assets/demo-frames/drive_03_frame_004.jpg'
+import drive03Frame005 from '@/assets/demo-frames/drive_03_frame_005.jpg'
+import drive03Frame006 from '@/assets/demo-frames/drive_03_frame_006.jpg'
+import static03Frame000 from '@/assets/demo-frames/static_03_frame_000.jpg'
+import static04Frame000 from '@/assets/demo-frames/static_04_frame_000.jpg'
+import static04Frame001 from '@/assets/demo-frames/static_04_frame_001.jpg'
 
 interface SearchResult {
   id: string
@@ -55,31 +61,39 @@ interface SearchFilters {
 
 // Mock search database with real frames
 const SEARCH_DATABASE: SearchResult[] = [
-  // Driving camera results
+  // Driving camera results - Drive 01
   { id: '1', frame_image: drive01Frame000, confidence: 95, video_source: 'GH010001.MP4', timestamp: 10, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   { id: '2', frame_image: drive01Frame001, confidence: 92, video_source: 'GH010001.MP4', timestamp: 30, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   { id: '3', frame_image: drive01Frame002, confidence: 89, video_source: 'GH010001.MP4', timestamp: 60, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   { id: '4', frame_image: drive01Frame003, confidence: 86, video_source: 'GH010001.MP4', timestamp: 120, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   { id: '5', frame_image: drive01Frame004, confidence: 83, video_source: 'GH010001.MP4', timestamp: 180, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '6', frame_image: drive01Frame005, confidence: 80, video_source: 'GH010001.MP4', timestamp: 240, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '7', frame_image: drive01Frame006, confidence: 78, video_source: 'GH010001.MP4', timestamp: 300, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '8', frame_image: drive01Frame007, confidence: 75, video_source: 'GH010001.MP4', timestamp: 360, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   
-  { id: '6', frame_image: drive02Frame000, confidence: 94, video_source: 'GH010002.MP4', timestamp: 15, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
-  { id: '7', frame_image: drive02Frame001, confidence: 91, video_source: 'GH010002.MP4', timestamp: 35, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
-  { id: '8', frame_image: drive02Frame002, confidence: 88, video_source: 'GH010002.MP4', timestamp: 65, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
-  { id: '9', frame_image: drive02Frame003, confidence: 85, video_source: 'GH010002.MP4', timestamp: 125, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
-  { id: '10', frame_image: drive02Frame004, confidence: 82, video_source: 'GH010002.MP4', timestamp: 185, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  // Driving camera results - Drive 02
+  { id: '9', frame_image: drive02Frame000, confidence: 94, video_source: 'GH010002.MP4', timestamp: 15, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '10', frame_image: drive02Frame001, confidence: 91, video_source: 'GH010002.MP4', timestamp: 35, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '11', frame_image: drive02Frame002, confidence: 88, video_source: 'GH010002.MP4', timestamp: 65, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '12', frame_image: drive02Frame003, confidence: 85, video_source: 'GH010002.MP4', timestamp: 125, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '13', frame_image: drive02Frame004, confidence: 82, video_source: 'GH010002.MP4', timestamp: 185, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '14', frame_image: drive02Frame005, confidence: 79, video_source: 'GH010002.MP4', timestamp: 245, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '15', frame_image: drive02Frame006, confidence: 76, video_source: 'GH010002.MP4', timestamp: 305, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '16', frame_image: drive02Frame007, confidence: 73, video_source: 'GH010002.MP4', timestamp: 365, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  
+  // Driving camera results - Drive 03
+  { id: '17', frame_image: drive03Frame000, confidence: 93, video_source: 'GH010003.MP4', timestamp: 20, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '18', frame_image: drive03Frame001, confidence: 90, video_source: 'GH010003.MP4', timestamp: 50, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '19', frame_image: drive03Frame002, confidence: 87, video_source: 'GH010003.MP4', timestamp: 80, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '20', frame_image: drive03Frame003, confidence: 84, video_source: 'GH010003.MP4', timestamp: 140, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '21', frame_image: drive03Frame004, confidence: 81, video_source: 'GH010003.MP4', timestamp: 200, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '22', frame_image: drive03Frame005, confidence: 78, video_source: 'GH010003.MP4', timestamp: 260, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
+  { id: '23', frame_image: drive03Frame006, confidence: 75, video_source: 'GH010003.MP4', timestamp: 320, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Highway driving', category: 'driving_camera' } },
   
   // Static camera results
-  { id: '11', frame_image: static01Frame000, confidence: 93, video_source: 'GH010031.MP4', timestamp: 20, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '12', frame_image: static01Frame001, confidence: 90, video_source: 'GH010031.MP4', timestamp: 40, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '13', frame_image: static01Frame002, confidence: 87, video_source: 'GH010031.MP4', timestamp: 70, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '14', frame_image: static01Frame003, confidence: 84, video_source: 'GH010031.MP4', timestamp: 130, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '15', frame_image: static01Frame004, confidence: 81, video_source: 'GH010031.MP4', timestamp: 190, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  
-  { id: '16', frame_image: static02Frame000, confidence: 92, video_source: 'GH010032.MP4', timestamp: 25, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '17', frame_image: static02Frame001, confidence: 89, video_source: 'GH010032.MP4', timestamp: 45, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '18', frame_image: static02Frame002, confidence: 86, video_source: 'GH010032.MP4', timestamp: 75, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '19', frame_image: static02Frame003, confidence: 83, video_source: 'GH010032.MP4', timestamp: 135, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
-  { id: '20', frame_image: static02Frame004, confidence: 80, video_source: 'GH010032.MP4', timestamp: 195, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } }
+  { id: '24', frame_image: static03Frame000, confidence: 92, video_source: 'GH010031.MP4', timestamp: 25, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
+  { id: '25', frame_image: static04Frame000, confidence: 89, video_source: 'GH010032.MP4', timestamp: 30, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } },
+  { id: '26', frame_image: static04Frame001, confidence: 86, video_source: 'GH010032.MP4', timestamp: 90, metadata: { weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', category: 'static_camera' } }
 ]
 
 export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfaceProps) {
