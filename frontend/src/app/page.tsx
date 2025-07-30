@@ -8,11 +8,12 @@ import { SearchInterface } from '@/components/search/search-interface'
 import { VideoList } from '@/components/videos/video-list'
 import { SearchResults } from '@/components/search/search-results'
 import { ExportManager } from '@/components/export/export-manager'
+import { Dashboard } from '@/components/dashboard/dashboard'
 
-type ActiveTab = 'upload' | 'search' | 'videos' | 'exports'
+type ActiveTab = 'dashboard' | 'upload' | 'search' | 'videos' | 'exports'
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('search')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard')
   const [searchResults, setSearchResults] = useState(null)
 
   const handleSearch = (results: any) => {
@@ -21,6 +22,8 @@ export default function Home() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard onNavigate={setActiveTab} />
       case 'upload':
         return <VideoUpload />
       case 'search':
@@ -35,17 +38,19 @@ export default function Home() {
       case 'exports':
         return <ExportManager />
       default:
-        return <SearchInterface onSearchResults={handleSearch} />
+        return <Dashboard onNavigate={setActiveTab} />
     }
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen rs-gradient-subtle">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto p-6">
-          {renderContent()}
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto p-8">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>

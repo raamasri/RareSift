@@ -134,157 +134,257 @@ export function VideoUpload() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Upload AV Video</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Upload driving videos to analyze and search for scenarios. Supported formats: MP4, AVI, MOV, MKV, WEBM
+      {/* Page Header */}
+      <div className="text-center space-y-4">
+        <div className="mx-auto w-16 h-16 rs-gradient-primary rounded-2xl flex items-center justify-center rs-shadow-lg animate-float">
+          <CloudArrowUpIcon className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Data Ingestion Portal</h1>
+          <p className="text-lg text-slate-600 mt-2 max-w-2xl mx-auto">
+            Upload autonomous vehicle footage for AI-powered analysis and scenario detection
+          </p>
+        </div>
+        <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <span>Real-time processing</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Enterprise security</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            <span>CLIP AI analysis</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rs-card p-8">
+        <div className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-slate-900">Video Upload</h2>
+            <p className="text-slate-600 mt-2">
+              Support for all major video formats with intelligent preprocessing
             </p>
           </div>
 
-          {/* File Drop Zone */}
+          {/* Professional File Drop Zone */}
           <div
             {...getRootProps()}
             className={clsx(
-              'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+              'relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 group',
               isDragActive
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 rs-shadow-lg scale-105'
                 : selectedFile
-                ? 'border-green-500 bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-emerald-400 bg-gradient-to-br from-emerald-50 to-green-50 rs-shadow'
+                : 'border-slate-300 hover:border-indigo-300 hover:bg-gradient-to-br hover:from-slate-50 hover:to-indigo-50 hover:rs-shadow'
             )}
           >
             <input {...getInputProps()} />
             
             {selectedFile ? (
-              <div className="space-y-3">
-                <CheckCircleIcon className="mx-auto h-12 w-12 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-green-900">{selectedFile.name}</p>
-                  <p className="text-xs text-green-600">{formatFileSize(selectedFile.size)}</p>
+              <div className="space-y-4">
+                <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                  <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
                 </div>
-                <p className="text-xs text-green-600">Click to change video</p>
+                <div>
+                  <p className="text-lg font-semibold text-emerald-900">{selectedFile.name}</p>
+                  <p className="text-sm text-emerald-600 mt-1">{formatFileSize(selectedFile.size)}</p>
+                </div>
+                <div className="inline-flex items-center space-x-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium">
+                  <FilmIcon className="h-4 w-4" />
+                  <span>Video ready for processing</span>
+                </div>
+                <p className="text-sm text-emerald-600">Click to select a different video</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="space-y-4">
+                <div className={clsx(
+                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300',
+                  isDragActive
+                    ? 'bg-indigo-200 scale-110'
+                    : 'bg-slate-100 group-hover:bg-indigo-100 group-hover:scale-105'
+                )}>
+                  <CloudArrowUpIcon className={clsx(
+                    'h-8 w-8 transition-colors duration-300',
+                    isDragActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'
+                  )} />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">
-                    {isDragActive ? 'Drop the video here' : 'Drag & drop a video here, or click to select'}
+                  <p className="text-lg font-semibold text-slate-900">
+                    {isDragActive ? 'Drop your video here' : 'Upload your AV footage'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Maximum file size: 1GB</p>
+                  <p className="text-slate-600 mt-2">
+                    Drag and drop your video file, or click to browse
+                  </p>
+                </div>
+                <div className="flex items-center justify-center space-x-4 text-sm text-slate-500">
+                  <span>MP4, AVI, MOV, MKV, WEBM</span>
+                  <span>•</span>
+                  <span>Max 1GB</span>
+                  <span>•</span>
+                  <span>Secure processing</span>
                 </div>
               </div>
             )}
+
+            {/* Decorative elements */}
+            <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg opacity-50"></div>
+            <div className="absolute bottom-4 left-4 w-6 h-6 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg opacity-30"></div>
           </div>
 
-          {/* Upload Progress */}
+          {/* Professional Upload Progress */}
           {isUploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Uploading...</span>
-                <span className="text-gray-900 font-medium">{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
+            <div className="rs-card p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Processing Upload</p>
+                      <p className="text-sm text-slate-600">Preparing your video for AI analysis</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-indigo-600">{uploadProgress}%</p>
+                    <p className="text-xs text-slate-500">Complete</p>
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="w-full bg-slate-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-500 relative overflow-hidden"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm text-slate-600">
+                  <span>Extracting frames and generating embeddings...</span>
+                  <span>ETA: {Math.max(1, Math.ceil((100 - uploadProgress) / 10))}m</span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Success Message */}
+          {/* Professional Success Message */}
           {uploadSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                <p className="text-sm font-medium text-green-900">
-                  Video uploaded successfully! Processing will begin automatically.
-                </p>
+            <div className="rs-card p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                  <CheckCircleIcon className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-emerald-900">Upload Successful!</h4>
+                  <p className="text-sm text-emerald-700 mt-1">
+                    Your video has been uploaded and is now being processed by our AI pipeline. 
+                    You can start searching as soon as processing completes.
+                  </p>
+                </div>
+                <div className="rs-status-success">
+                  Processing Started
+                </div>
               </div>
             </div>
           )}
 
-          {/* Error Message */}
+          {/* Professional Error Message */}
           {uploadMutation.isError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
-                <p className="text-sm font-medium text-red-900">
-                  Upload failed: {uploadMutation.error?.message || 'Unknown error'}
-                </p>
+            <div className="rs-card p-6 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-red-900">Upload Failed</h4>
+                  <p className="text-sm text-red-700 mt-1">
+                    {uploadMutation.error?.message || 'An unexpected error occurred during upload. Please try again.'}
+                  </p>
+                </div>
+                <button className="rs-btn-secondary text-red-600 border-red-200 hover:bg-red-50">
+                  Retry Upload
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Metadata Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Video Metadata</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Provide additional context to improve search accuracy (optional)
+      {/* Enhanced Metadata Form */}
+      <div className="rs-card p-8">
+        <div className="space-y-8">
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-gradient-to-br from-slate-100 to-indigo-100 rounded-xl flex items-center justify-center mb-4">
+              <FilmIcon className="h-6 w-6 text-slate-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">Video Metadata</h3>
+            <p className="text-slate-600 mt-2 max-w-md mx-auto">
+              Enrich your upload with contextual information to improve AI search accuracy
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-700">
                 Weather Conditions
               </label>
               <select
                 value={metadata.weather}
                 onChange={(e) => setMetadata(prev => ({ ...prev, weather: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="rs-input"
                 disabled={isUploading}
               >
-                <option value="">Select weather</option>
-                <option value="sunny">Sunny</option>
-                <option value="cloudy">Cloudy</option>
-                <option value="rainy">Rainy</option>
-                <option value="snowy">Snowy</option>
-                <option value="foggy">Foggy</option>
+                <option value="">Select weather conditions</option>
+                <option value="sunny">☀️ Sunny & Clear</option>
+                <option value="cloudy">☁️ Cloudy & Overcast</option>
+                <option value="rainy">🌧️ Rainy & Wet</option>
+                <option value="snowy">❄️ Snowy & Icy</option>
+                <option value="foggy">🌫️ Foggy & Low Visibility</option>
               </select>
+              <p className="text-xs text-slate-500">Helps identify weather-specific driving scenarios</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-700">
                 Time of Day
               </label>
               <select
                 value={metadata.time_of_day}
                 onChange={(e) => setMetadata(prev => ({ ...prev, time_of_day: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="rs-input"
                 disabled={isUploading}
               >
-                <option value="">Select time</option>
-                <option value="day">Day</option>
-                <option value="night">Night</option>
-                <option value="dawn">Dawn</option>
-                <option value="dusk">Dusk</option>
+                <option value="">Select time period</option>
+                <option value="day">🌅 Daytime</option>
+                <option value="night">🌙 Nighttime</option>
+                <option value="dawn">🌄 Dawn & Early Morning</option>
+                <option value="dusk">🌆 Dusk & Evening</option>
               </select>
+              <p className="text-xs text-slate-500">Enhances lighting condition detection</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-700">
+                Location Context
               </label>
               <input
                 type="text"
                 value={metadata.location}
                 onChange={(e) => setMetadata(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="e.g., Highway 101, Downtown SF"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Highway 101, Downtown SF, Residential Area"
+                className="rs-input"
                 disabled={isUploading}
               />
+              <p className="text-xs text-slate-500">Specify road type, city, or landmark</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-700">
                 Average Speed (km/h)
               </label>
               <input
@@ -294,36 +394,58 @@ export function VideoUpload() {
                 placeholder="e.g., 35"
                 min="0"
                 max="200"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="rs-input"
                 disabled={isUploading}
               />
+              <p className="text-xs text-slate-500">Typical driving speed during recording</p>
             </div>
           </div>
 
-          {/* Upload Button */}
-          <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-            <div className="text-sm text-gray-500">
-              {selectedFile ? (
-                <span>Ready to upload: {selectedFile.name}</span>
-              ) : (
-                <span>Select a video file to begin</span>
+          {/* Enhanced Upload Actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-8 border-t border-slate-200">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-sm">
+                {selectedFile ? (
+                  <>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                    <span className="font-medium text-slate-700">Ready to upload:</span>
+                    <span className="text-slate-600">{selectedFile.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    <span className="text-slate-500">Select a video file to begin processing</span>
+                  </>
+                )}
+              </div>
+              {selectedFile && (
+                <div className="flex items-center space-x-4 text-xs text-slate-500">
+                  <span>Size: {formatFileSize(selectedFile.size)}</span>
+                  <span>•</span>
+                  <span>Format: {selectedFile.name.split('.').pop()?.toUpperCase()}</span>
+                  <span>•</span>
+                  <span>Est. processing: {Math.ceil(selectedFile.size / (1024 * 1024) * 0.5)}min</span>
+                </div>
               )}
             </div>
             
             <button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className={clsx(
+                'rs-btn-primary px-8 py-3 text-base font-semibold flex items-center space-x-3',
+                !selectedFile || isUploading ? 'opacity-50 cursor-not-allowed' : ''
+              )}
             >
               {isUploading ? (
                 <>
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Processing...</span>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                  <span>Processing Upload...</span>
                 </>
               ) : (
                 <>
-                  <CloudArrowUpIcon className="h-4 w-4" />
-                  <span>Upload & Process</span>
+                  <CloudArrowUpIcon className="h-5 w-5" />
+                  <span>Upload & Process Video</span>
                 </>
               )}
             </button>
@@ -331,24 +453,62 @@ export function VideoUpload() {
         </div>
       </div>
 
-      {/* Processing Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <FilmIcon className="h-5 w-5 text-blue-600 mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-blue-900">About Video Processing</p>
-            <p className="text-sm text-blue-700">
-              After upload, your video will be automatically processed to:
-            </p>
-            <ul className="text-sm text-blue-700 list-disc list-inside space-y-1 mt-2">
-              <li>Extract frames every second for analysis</li>
-              <li>Generate AI-powered embeddings using CLIP</li>
-              <li>Detect basic conditions (lighting, weather hints)</li>
-              <li>Make content searchable by natural language</li>
-            </ul>
-            <p className="text-xs text-blue-600 mt-2">
-              Processing typically takes 1-2 minutes per minute of video.
-            </p>
+      {/* Enhanced Processing Info */}
+      <div className="rs-card p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200">
+        <div className="flex items-start space-x-4">
+          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <FilmIcon className="h-5 w-5 text-indigo-600" />
+          </div>
+          <div className="space-y-3 flex-1">
+            <div>
+              <h4 className="text-base font-bold text-indigo-900">AI Processing Pipeline</h4>
+              <p className="text-sm text-indigo-700 mt-1">
+                Your video undergoes advanced AI analysis for intelligent scenario detection
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
+                  <span className="text-sm font-medium text-indigo-800">Frame Extraction</span>
+                </div>
+                <p className="text-xs text-indigo-600 ml-4">1-second intervals for comprehensive coverage</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <span className="text-sm font-medium text-indigo-800">CLIP Embeddings</span>
+                </div>
+                <p className="text-xs text-indigo-600 ml-4">512-dimensional vectors for semantic search</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                  <span className="text-sm font-medium text-indigo-800">Scene Analysis</span>
+                </div>
+                <p className="text-xs text-indigo-600 ml-4">Lighting, weather, and context detection</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                  <span className="text-sm font-medium text-indigo-800">Search Indexing</span>
+                </div>
+                <p className="text-xs text-indigo-600 ml-4">Natural language query optimization</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between pt-2 border-t border-indigo-200">
+              <div className="text-xs text-indigo-600">
+                Typical processing time: <span className="font-semibold">1-2 minutes per video minute</span>
+              </div>
+              <div className="rs-status-processing text-xs">
+                GPU Accelerated
+              </div>
+            </div>
           </div>
         </div>
       </div>

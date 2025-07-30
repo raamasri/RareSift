@@ -139,185 +139,353 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
   const isLoading = textSearchMutation.isPending || imageSearchMutation.isPending
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="space-y-6">
-        {/* Search Type Toggle */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Search Scenarios</h2>
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setSearchType('text')}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                searchType === 'text'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              )}
-            >
-              <MagnifyingGlassIcon className="h-4 w-4 inline mr-2" />
-              Text Search
-            </button>
-            <button
-              onClick={() => setSearchType('image')}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                searchType === 'image'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              )}
-            >
-              <PhotoIcon className="h-4 w-4 inline mr-2" />
-              Image Search
-            </button>
+    <div className="space-y-8">
+      {/* Professional Page Header */}
+      <div className="text-center space-y-4">
+        <div className="mx-auto w-16 h-16 rs-gradient-primary rounded-2xl flex items-center justify-center rs-shadow-lg animate-float">
+          <MagnifyingGlassIcon className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Scenario Discovery Engine</h1>
+          <p className="text-lg text-slate-600 mt-2 max-w-2xl mx-auto">
+            Find specific driving scenarios using natural language or visual similarity search
+          </p>
+        </div>
+        <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <span>CLIP-powered</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Semantic search</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            <span>Visual similarity</span>
           </div>
         </div>
+      </div>
 
-        {/* Search Input */}
-        {searchType === 'text' ? (
-          <div className="space-y-4">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleTextSearch()}
-                placeholder="Describe the scenario you're looking for... (e.g., 'pedestrian crossing at night', 'car turning left in rain')"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
-              />
+      <div className="rs-card p-8">
+        <div className="space-y-8">
+          {/* Enhanced Search Type Toggle */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Search Method</h2>
+              <p className="text-slate-600 mt-1">Choose how you want to search for scenarios</p>
             </div>
-            <div className="text-sm text-gray-500">
-              <strong>Examples:</strong> "pedestrian near intersection at night", "highway merge in rain", "cyclist in bike lane", "emergency vehicle approaching"
+            <div className="flex bg-slate-100 rounded-xl p-1.5 rs-shadow-inner">
+              <button
+                onClick={() => setSearchType('text')}
+                className={clsx(
+                  'px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center space-x-2',
+                  searchType === 'text'
+                    ? 'bg-white text-slate-900 rs-shadow transform scale-105'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
+              >
+                <MagnifyingGlassIcon className="h-4 w-4" />
+                <span>Natural Language</span>
+              </button>
+              <button
+                onClick={() => setSearchType('image')}
+                className={clsx(
+                  'px-6 py-3 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center space-x-2',
+                  searchType === 'image'
+                    ? 'bg-white text-slate-900 rs-shadow transform scale-105'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
+              >
+                <PhotoIcon className="h-4 w-4" />
+                <span>Visual Similarity</span>
+              </button>
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div
-              {...getRootProps()}
-              className={clsx(
-                'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
-                isDragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : selectedImage
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              )}
-            >
-              <input {...getInputProps()} />
-              {selectedImage ? (
-                <div className="space-y-2">
-                  <PhotoIcon className="mx-auto h-8 w-8 text-green-600" />
-                  <p className="text-sm font-medium text-green-900">{selectedImage.name}</p>
-                  <p className="text-xs text-green-600">Click to change image</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <PhotoIcon className="mx-auto h-8 w-8 text-gray-400" />
-                  <p className="text-sm text-gray-600">
-                    {isDragActive ? 'Drop the image here' : 'Drag & drop an image here, or click to select'}
-                  </p>
-                  <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 10MB</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* Filters */}
-        <div className="border-t pt-4">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
-          >
-            <AdjustmentsHorizontalIcon className="h-4 w-4 mr-2" />
-            Advanced Filters
-          </button>
-          
-          {showFilters && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Time of Day</label>
-                <select
-                  value={filters.time_of_day || ''}
-                  onChange={(e) => setFilters(prev => ({ ...prev, time_of_day: e.target.value || undefined }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Any</option>
-                  {filterSuggestions?.time_of_day?.map((option: string) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+          {/* Enhanced Search Input */}
+          {searchType === 'text' ? (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Natural Language Query
+                </label>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleTextSearch()}
+                    placeholder="Describe the scenario... (e.g., 'pedestrian crossing at night', 'car turning left in rain')"
+                    className="rs-input pl-12 pr-4 py-4 text-base"
+                    disabled={isLoading}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Use natural language to describe what you're looking for in the driving footage
+                </p>
               </div>
               
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Weather</label>
-                <select
-                  value={filters.weather || ''}
-                  onChange={(e) => setFilters(prev => ({ ...prev, weather: e.target.value || undefined }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Any</option>
-                  {filterSuggestions?.weather?.map((option: string) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+              <div className="rs-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">Query Examples</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="space-y-1">
+                    <div className="text-blue-700">"pedestrian near intersection at night"</div>
+                    <div className="text-blue-700">"highway merge in heavy rain"</div>
+                    <div className="text-blue-700">"cyclist in dedicated bike lane"</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-blue-700">"emergency vehicle with flashing lights"</div>
+                    <div className="text-blue-700">"construction zone with orange cones"</div>
+                    <div className="text-blue-700">"school bus stopped with children"</div>
+                  </div>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Results</label>
-                <select
-                  value={filters.limit}
-                  onChange={(e) => setFilters(prev => ({ ...prev, limit: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Reference Image Upload
+                </label>
+                <div
+                  {...getRootProps()}
+                  className={clsx(
+                    'relative border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 group',
+                    isDragActive
+                      ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 rs-shadow-lg scale-105'
+                      : selectedImage
+                      ? 'border-emerald-400 bg-gradient-to-br from-emerald-50 to-green-50 rs-shadow'
+                      : 'border-slate-300 hover:border-indigo-300 hover:bg-gradient-to-br hover:from-slate-50 hover:to-indigo-50 hover:rs-shadow'
+                  )}
                 >
-                  <option value={5}>5 results</option>
-                  <option value={10}>10 results</option>
-                  <option value={20}>20 results</option>
-                  <option value={50}>50 results</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Similarity</label>
-                <select
-                  value={filters.similarity_threshold}
-                  onChange={(e) => setFilters(prev => ({ ...prev, similarity_threshold: parseFloat(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value={0.1}>Very Low (10%)</option>
-                  <option value={0.2}>Low (20%)</option>
-                  <option value={0.3}>Medium (30%)</option>
-                  <option value={0.5}>High (50%)</option>
-                  <option value={0.7}>Very High (70%)</option>
-                </select>
+                  <input {...getInputProps()} />
+                  {selectedImage ? (
+                    <div className="space-y-4">
+                      <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                        <PhotoIcon className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-emerald-900">{selectedImage.name}</p>
+                        <p className="text-sm text-emerald-600 mt-1">Image ready for similarity search</p>
+                      </div>
+                      <p className="text-sm text-emerald-600">Click to select a different image</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={clsx(
+                        'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300',
+                        isDragActive
+                          ? 'bg-indigo-200 scale-110'
+                          : 'bg-slate-100 group-hover:bg-indigo-100 group-hover:scale-105'
+                      )}>
+                        <PhotoIcon className={clsx(
+                          'h-8 w-8 transition-colors duration-300',
+                          isDragActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'
+                        )} />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-slate-900">
+                          {isDragActive ? 'Drop your image here' : 'Upload reference image'}
+                        </p>
+                        <p className="text-slate-600 mt-2">
+                          Find visually similar scenes in your video library
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-center space-x-4 text-sm text-slate-500">
+                        <span>PNG, JPG, WEBP</span>
+                        <span>•</span>
+                        <span>Max 10MB</span>
+                        <span>•</span>
+                        <span>AI-powered matching</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Upload an image that represents the type of scenario you want to find
+                </p>
               </div>
             </div>
           )}
-        </div>
 
-        {/* Search Button */}
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            Search across all processed videos for matching scenarios
-          </div>
-          <button
-            onClick={searchType === 'text' ? handleTextSearch : handleImageSearch}
-            disabled={isLoading || (searchType === 'text' ? !query.trim() : !selectedImage)}
-            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                <span>Searching...</span>
-              </>
-            ) : (
-              <>
-                <MagnifyingGlassIcon className="h-4 w-4" />
-                <span>Search</span>
-              </>
+          {/* Enhanced Advanced Filters */}
+          <div className="pt-8 border-t border-slate-200">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={clsx(
+                'flex items-center space-x-3 text-sm font-semibold transition-colors group',
+                showFilters ? 'text-indigo-600' : 'text-slate-700 hover:text-slate-900'
+              )}
+            >
+              <div className={clsx(
+                'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+                showFilters ? 'bg-indigo-100' : 'bg-slate-100 group-hover:bg-slate-200'
+              )}>
+                <AdjustmentsHorizontalIcon className={clsx(
+                  'h-4 w-4 transition-colors',
+                  showFilters ? 'text-indigo-600' : 'text-slate-600'
+                )} />
+              </div>
+              <span>Advanced Search Filters</span>
+              <div className={clsx(
+                'text-xs px-2 py-1 rounded-full transition-colors',
+                showFilters ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+              )}>
+                {showFilters ? 'Hide' : 'Show'}
+              </div>
+            </button>
+            
+            {showFilters && (
+              <div className="mt-6 rs-card p-6 bg-gradient-to-r from-slate-50 to-indigo-50">
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 mb-4">Refine Your Search</h4>
+                    <p className="text-xs text-slate-600 mb-4">
+                      Use these filters to narrow down results based on driving conditions and search parameters
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Time of Day
+                      </label>
+                      <select
+                        value={filters.time_of_day || ''}
+                        onChange={(e) => setFilters(prev => ({ ...prev, time_of_day: e.target.value || undefined }))}
+                        className="rs-input text-sm"
+                      >
+                        <option value="">Any time</option>
+                        {filterSuggestions?.time_of_day?.map((option: string) => (
+                          <option key={option} value={option}>
+                            {option === 'day' && '🌅 '}
+                            {option === 'night' && '🌙 '}
+                            {option === 'dawn' && '🌄 '}
+                            {option === 'dusk' && '🌆 '}
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500">Filter by lighting conditions</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Weather Conditions
+                      </label>
+                      <select
+                        value={filters.weather || ''}
+                        onChange={(e) => setFilters(prev => ({ ...prev, weather: e.target.value || undefined }))}
+                        className="rs-input text-sm"
+                      >
+                        <option value="">Any weather</option>
+                        {filterSuggestions?.weather?.map((option: string) => (
+                          <option key={option} value={option}>
+                            {option === 'sunny' && '☀️ '}
+                            {option === 'cloudy' && '☁️ '}
+                            {option === 'rainy' && '🌧️ '}
+                            {option === 'snowy' && '❄️ '}
+                            {option === 'foggy' && '🌫️ '}
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500">Filter by weather patterns</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Result Count
+                      </label>
+                      <select
+                        value={filters.limit}
+                        onChange={(e) => setFilters(prev => ({ ...prev, limit: parseInt(e.target.value) }))}
+                        className="rs-input text-sm"
+                      >
+                        <option value={5}>5 results</option>
+                        <option value={10}>10 results</option>
+                        <option value={20}>20 results</option>
+                        <option value={50}>50 results</option>
+                      </select>
+                      <p className="text-xs text-slate-500">Number of matches to return</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Similarity Threshold
+                      </label>
+                      <select
+                        value={filters.similarity_threshold}
+                        onChange={(e) => setFilters(prev => ({ ...prev, similarity_threshold: parseFloat(e.target.value) }))}
+                        className="rs-input text-sm"
+                      >
+                        <option value={0.1}>🔍 Very Broad (10%)</option>
+                        <option value={0.2}>📊 Broad (20%)</option>
+                        <option value={0.3}>⚖️ Balanced (30%)</option>
+                        <option value={0.5}>🎯 Precise (50%)</option>
+                        <option value={0.7}>💎 Very Precise (70%)</option>
+                      </select>
+                      <p className="text-xs text-slate-500">How similar results must be</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
+
+          {/* Enhanced Search Actions */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-8 border-t border-slate-200">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-sm">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <span className="font-medium text-slate-700">
+                  {searchType === 'text' ? 'Natural language search' : 'Visual similarity search'}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500">
+                {searchType === 'text' 
+                  ? query.trim() 
+                    ? `Query: "${query.trim()}"`
+                    : 'Enter a description to search for matching scenarios'
+                  : selectedImage
+                    ? `Image: ${selectedImage.name}`
+                    : 'Upload an image to find visually similar scenes'
+                }
+              </div>
+              <div className="flex items-center space-x-4 text-xs text-slate-400">
+                <span>CLIP AI-powered</span>
+                <span>•</span>
+                <span>Semantic matching</span>
+                <span>•</span>
+                <span>Real-time search</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={searchType === 'text' ? handleTextSearch : handleImageSearch}
+              disabled={isLoading || (searchType === 'text' ? !query.trim() : !selectedImage)}
+              className={clsx(
+                'rs-btn-primary px-8 py-3 text-base font-semibold flex items-center space-x-3',
+                (isLoading || (searchType === 'text' ? !query.trim() : !selectedImage)) ? 'opacity-50 cursor-not-allowed' : ''
+              )}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                  <span>Searching Scenarios...</span>
+                </>
+              ) : (
+                <>
+                  <MagnifyingGlassIcon className="h-5 w-5" />
+                  <span>
+                    {searchType === 'text' ? 'Search by Text' : 'Search by Image'}
+                  </span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

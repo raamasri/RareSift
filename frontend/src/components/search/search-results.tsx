@@ -95,93 +95,128 @@ export function SearchResults({ results }: SearchResultsProps) {
 
   if (!results.results.length) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <SparklesIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Results Found</h3>
-        <p className="text-gray-600 mb-4">
-          Try adjusting your search query or filters to find matching scenarios.
+      <div className="rs-card p-12 text-center">
+        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-slate-100 to-indigo-100 rounded-3xl flex items-center justify-center mb-6">
+          <SparklesIcon className="h-10 w-10 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 mb-3">No Scenarios Found</h3>
+        <p className="text-slate-600 mb-6 max-w-md mx-auto">
+          We couldn't find any scenarios matching your search criteria. Try adjusting your query or filters to discover relevant driving scenes.
         </p>
+        <div className="flex flex-wrap justify-center gap-2 text-sm text-slate-500">
+          <div className="px-3 py-1 bg-slate-100 rounded-full">Broaden search terms</div>
+          <div className="px-3 py-1 bg-slate-100 rounded-full">Adjust similarity threshold</div>
+          <div className="px-3 py-1 bg-slate-100 rounded-full">Remove filters</div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Results Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      {/* Enhanced Results Header */}
+      <div className="rs-card p-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl flex items-center justify-center">
+              <SparklesIcon className="h-6 w-6 text-emerald-600" />
+            </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-xl font-bold text-slate-900">
                 Search Results
               </h3>
-              <p className="text-sm text-gray-600">
-                Found {results.total_found} scenarios in {results.search_time_ms}ms
-                {results.query_text && (
-                  <span> for "{results.query_text}"</span>
-                )}
-              </p>
+              <div className="mt-1 space-y-1">
+                <p className="text-sm text-slate-600">
+                  Found <span className="font-semibold text-emerald-600">{results.total_found}</span> scenarios 
+                  in <span className="font-semibold">{results.search_time_ms}ms</span>
+                  {results.query_text && (
+                    <span> matching <em className="text-indigo-600">"{results.query_text}"</em></span>
+                  )}
+                </p>
+                <div className="flex items-center space-x-4 text-xs text-slate-500">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                    <span>AI-powered matching</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Semantic analysis</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Real-time processing</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
-            {/* Mode Toggle */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Enhanced Mode Toggle */}
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleComparisonMode}
-                className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                className={clsx(
+                  'px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2',
                   comparisonMode 
-                    ? 'bg-blue-100 text-blue-700 border border-blue-300' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white rs-shadow hover:from-green-600 hover:to-emerald-600' 
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+                )}
               >
-                {comparisonMode ? 'Exit Compare' : 'Compare Mode'}
+                <FilmIcon className="h-4 w-4" />
+                <span>{comparisonMode ? 'Exit Compare Mode' : 'Compare Mode'}</span>
               </button>
             </div>
 
             {comparisonMode ? (
-              // Comparison mode controls
-              <div className="flex items-center space-x-3">
-                <div className="text-sm text-gray-600">
-                  {comparisonResults.length} selected for comparison
+              // Enhanced Comparison mode controls
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span className="text-green-600 font-bold text-xs">{comparisonResults.length}</span>
+                  </div>
+                  <span className="text-slate-600 font-medium">selected for comparison</span>
                 </div>
                 {comparisonResults.length >= 2 && (
                   <button
                     onClick={startComparison}
-                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                    className="rs-btn-primary px-4 py-2 text-sm flex items-center space-x-2"
                   >
                     <FilmIcon className="h-4 w-4" />
-                    <span>Compare ({comparisonResults.length})</span>
+                    <span>Compare Scenarios ({comparisonResults.length})</span>
                   </button>
                 )}
                 {comparisonResults.length > 0 && (
                   <button
                     onClick={() => setComparisonResults([])}
-                    className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                    className="text-sm text-slate-600 hover:text-slate-800 font-medium px-3 py-2 rounded-lg hover:bg-slate-100"
                   >
-                    Clear
+                    Clear Selection
                   </button>
                 )}
               </div>
             ) : (
-              // Export mode controls
-              <div className="flex items-center space-x-3">
-                <div className="text-sm text-gray-600">
-                  {selectedFrames.size} selected
+              // Enhanced Export mode controls
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <span className="text-indigo-600 font-bold text-xs">{selectedFrames.size}</span>
+                  </div>
+                  <span className="text-slate-600 font-medium">selected</span>
                 </div>
                 <button
                   onClick={selectedFrames.size === results.results.length ? clearSelection : selectAll}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-2 rounded-lg hover:bg-indigo-50"
                 >
                   {selectedFrames.size === results.results.length ? 'Clear All' : 'Select All'}
                 </button>
                 {selectedFrames.size > 0 && (
                   <button
                     onClick={() => setShowExportOptions(true)}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                    className="rs-btn-primary px-4 py-2 text-sm flex items-center space-x-2"
                   >
                     <ArrowDownTrayIcon className="h-4 w-4" />
-                    <span>Export ({selectedFrames.size})</span>
+                    <span>Export Dataset ({selectedFrames.size})</span>
                   </button>
                 )}
               </div>
@@ -190,8 +225,8 @@ export function SearchResults({ results }: SearchResultsProps) {
         </div>
       </div>
 
-      {/* Results Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Enhanced Results Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {results.results.map((result: SearchResult) => {
           const isSelected = selectedFrames.has(result.frame_id)
           const isInComparison = comparisonResults.find(r => r.frame_id === result.frame_id)
@@ -201,58 +236,58 @@ export function SearchResults({ results }: SearchResultsProps) {
             <div
               key={result.frame_id}
               className={clsx(
-                'bg-white rounded-lg shadow-sm border transition-all duration-200 overflow-hidden',
+                'rs-card transition-all duration-300 hover:rs-shadow-lg transform hover:-translate-y-1 overflow-hidden group',
                 comparisonMode && isInComparison
-                  ? 'border-green-500 ring-2 ring-green-200' 
+                  ? 'ring-2 ring-emerald-300 border-emerald-400 bg-gradient-to-br from-white to-emerald-50' 
                   : isSelected 
-                    ? 'border-blue-500 ring-2 ring-blue-200' 
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'ring-2 ring-indigo-300 border-indigo-400 bg-gradient-to-br from-white to-indigo-50' 
+                    : 'hover:border-slate-300'
               )}
             >
-              {/* Frame Image */}
-              <div className="relative aspect-video bg-gray-100">
+              {/* Enhanced Frame Image */}
+              <div className="relative aspect-video bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
                 <Image
                   src={`http://localhost:8000${result.frame_url || `/static/frames/video_${result.video_id}_frame_000000.jpg`}`}
                   alt={`Frame at ${formatTimestamp(result.timestamp)}`}
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 />
                 
-                {/* Selection Overlay */}
+                {/* Enhanced Selection Overlay */}
                 <div 
                   className="absolute inset-0 cursor-pointer"
                   onClick={() => comparisonMode ? toggleComparisonSelection(result) : toggleFrameSelection(result.frame_id)}
                 >
                   <div className={clsx(
-                    'absolute inset-0 transition-colors',
+                    'absolute inset-0 transition-all duration-300',
                     comparisonMode && isInComparison
-                      ? 'bg-green-600 bg-opacity-20'
+                      ? 'bg-gradient-to-t from-emerald-600/30 to-transparent'
                       : isSelected 
-                        ? 'bg-blue-600 bg-opacity-20' 
-                        : 'hover:bg-black hover:bg-opacity-10'
+                        ? 'bg-gradient-to-t from-indigo-600/30 to-transparent' 
+                        : 'hover:bg-gradient-to-t hover:from-black/20 hover:to-transparent'
                   )} />
                   
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-3 right-3">
                     <div className={clsx(
-                      'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors',
+                      'w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200 backdrop-blur-sm',
                       comparisonMode && isInComparison
-                        ? 'bg-green-600 border-green-600'
+                        ? 'bg-emerald-600 border-emerald-600 rs-shadow-lg scale-110'
                         : isSelected
-                          ? 'bg-blue-600 border-blue-600'
+                          ? 'bg-indigo-600 border-indigo-600 rs-shadow-lg scale-110'
                           : comparisonMode && isComparisonFull
-                            ? 'bg-gray-200 border-gray-300 opacity-50'
-                            : 'bg-white border-gray-300 hover:border-gray-400'
+                            ? 'bg-slate-200/80 border-slate-300 opacity-50'
+                            : 'bg-white/90 border-slate-300 hover:border-slate-400 hover:scale-110'
                     )}>
                       {(isSelected || (comparisonMode && isInComparison)) && (
-                        <CheckIcon className="h-3 w-3 text-white" />
+                        <CheckIcon className="h-4 w-4 text-white" />
                       )}
                     </div>
                     
-                    {/* Comparison Mode Badge */}
+                    {/* Enhanced Comparison Mode Badge */}
                     {comparisonMode && isInComparison && (
-                      <div className="absolute bottom-[-36px] right-0">
-                        <div className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      <div className="absolute -bottom-8 right-0">
+                        <div className="bg-emerald-600 text-white text-xs px-2 py-1 rounded-full font-bold rs-shadow">
                           #{comparisonResults.findIndex(r => r.frame_id === result.frame_id) + 1}
                         </div>
                       </div>
@@ -260,76 +295,130 @@ export function SearchResults({ results }: SearchResultsProps) {
                   </div>
                 </div>
 
-                {/* Similarity Badge */}
-                <div className="absolute top-2 left-2">
-                  <span className={clsx(
-                    'px-2 py-1 text-xs font-medium rounded-full',
-                    getSimilarityColor(result.similarity)
+                {/* Enhanced Similarity Badge */}
+                <div className="absolute top-3 left-3">
+                  <div className={clsx(
+                    'px-3 py-1.5 text-xs font-bold rounded-full backdrop-blur-sm rs-shadow',
+                    result.similarity >= 0.8 ? 'bg-emerald-500/90 text-white' :
+                    result.similarity >= 0.6 ? 'bg-blue-500/90 text-white' :
+                    result.similarity >= 0.4 ? 'bg-amber-500/90 text-white' :
+                    'bg-slate-500/90 text-white'
                   )}>
-                    {getSimilarityLabel(result.similarity)} ({Math.round(result.similarity * 100)}%)
-                  </span>
+                    {Math.round(result.similarity * 100)}%
+                  </div>
+                </div>
+
+                {/* Hover Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center rs-shadow-lg backdrop-blur-sm">
+                    <PlayIcon className="h-8 w-8 text-slate-700 ml-1" />
+                  </div>
                 </div>
               </div>
 
-              {/* Frame Info */}
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <ClockIcon className="h-4 w-4" />
-                    <span>{formatTimestamp(result.timestamp)}</span>
+              {/* Enhanced Frame Info */}
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
+                      <ClockIcon className="h-3 w-3 text-slate-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700">{formatTimestamp(result.timestamp)}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
                     Video #{result.video_id}
                   </div>
                 </div>
 
-                {/* Metadata */}
-                <div className="space-y-2">
+                {/* Enhanced Metadata */}
+                <div className="space-y-3">
                   {result.metadata?.time_of_day && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Time:</span>
-                      <span className="font-medium capitalize">{result.metadata.time_of_day}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-medium">Time of Day</span>
+                      <div className="flex items-center space-x-1">
+                        <div className="text-xs">
+                          {result.metadata.time_of_day === 'day' && '🌅'}
+                          {result.metadata.time_of_day === 'night' && '🌙'}
+                          {result.metadata.time_of_day === 'dawn' && '🌄'}
+                          {result.metadata.time_of_day === 'dusk' && '🌆'}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700 capitalize">
+                          {result.metadata.time_of_day}
+                        </span>
+                      </div>
                     </div>
                   )}
                   
                   {result.metadata?.weather_hint && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Condition:</span>
-                      <span className="font-medium capitalize">{result.metadata.weather_hint.replace('_', ' ')}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-medium">Weather</span>
+                      <div className="flex items-center space-x-1">
+                        <div className="text-xs">
+                          {result.metadata.weather_hint.includes('sunny') && '☀️'}
+                          {result.metadata.weather_hint.includes('cloudy') && '☁️'}
+                          {result.metadata.weather_hint.includes('rain') && '🌧️'}
+                          {result.metadata.weather_hint.includes('snow') && '❄️'}
+                          {result.metadata.weather_hint.includes('fog') && '🌫️'}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700 capitalize">
+                          {result.metadata.weather_hint.replace('_', ' ')}
+                        </span>
+                      </div>
                     </div>
                   )}
+                  
+                  {/* Similarity Score Display */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <span className="text-xs text-slate-500 font-medium">Match Score</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-16 bg-slate-200 rounded-full h-1.5">
+                        <div 
+                          className={clsx(
+                            'h-1.5 rounded-full transition-all duration-500',
+                            result.similarity >= 0.8 ? 'bg-emerald-500' :
+                            result.similarity >= 0.6 ? 'bg-blue-500' :
+                            result.similarity >= 0.4 ? 'bg-amber-500' : 'bg-slate-400'
+                          )}
+                          style={{ width: `${result.similarity * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700">
+                        {getSimilarityLabel(result.similarity)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                {/* Enhanced Actions */}
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                   {comparisonMode ? (
                     <button
                       onClick={() => toggleComparisonSelection(result)}
                       disabled={!isInComparison && isComparisonFull}
                       className={clsx(
-                        'flex items-center space-x-2 text-sm font-medium transition-colors',
+                        'flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
                         isInComparison
-                          ? 'text-green-600 hover:text-green-800'
+                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : isComparisonFull
-                            ? 'text-gray-400 cursor-not-allowed'
-                            : 'text-green-600 hover:text-green-800'
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
                       )}
                     >
                       <CheckIcon className="h-4 w-4" />
                       <span>
-                        {isInComparison ? 'Remove from Compare' : 'Add to Compare'}
+                        {isInComparison ? 'Remove' : 'Compare'}
                       </span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handlePlayVideo(result.video_id, result.timestamp)}
-                      className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      className="flex items-center space-x-2 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-sm font-semibold transition-all duration-200"
                     >
                       <PlayIcon className="h-4 w-4" />
-                      <span>Play Video</span>
+                      <span>Play</span>
                     </button>
                   )}
-                  <button className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 font-medium">
+                  <button className="flex items-center space-x-2 px-3 py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold transition-all duration-200">
                     <EyeIcon className="h-4 w-4" />
                     <span>Details</span>
                   </button>
@@ -340,12 +429,26 @@ export function SearchResults({ results }: SearchResultsProps) {
         })}
       </div>
 
-      {/* Load More */}
+      {/* Enhanced Load More */}
       {results.total_found > results.results.length && (
         <div className="text-center">
-          <button className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
-            Load More Results
-          </button>
+          <div className="rs-card p-6">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="text-sm text-slate-600">
+                Showing {results.results.length} of {results.total_found} scenarios
+              </div>
+              <button className="rs-btn-secondary px-8 py-3 text-base font-semibold flex items-center space-x-2">
+                <span>Load More Results</span>
+                <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin opacity-0 group-hover:opacity-100"></div>
+              </button>
+              <div className="w-full max-w-xs bg-slate-200 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(results.results.length / results.total_found) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
