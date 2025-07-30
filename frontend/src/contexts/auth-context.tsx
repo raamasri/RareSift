@@ -34,12 +34,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       try {
         if (tokenManager.isAuthenticated()) {
-          const currentUser = await auth.getCurrentUser()
-          setUser(currentUser)
+          // Add timeout to prevent hanging on failed API calls
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('API timeout')), 5000)
+          )
+          
+          const currentUser = await Promise.race([
+            auth.getCurrentUser(),
+            timeoutPromise
+          ])
+          setUser(currentUser as any)
         }
       } catch (error) {
-        console.error('Failed to initialize auth:', error)
-        tokenManager.clearTokens()
+        console.warn('Failed to initialize auth (API may be unavailable):', error)
+        // Don't clear tokens immediately - API might just be temporarily down
+        // tokenManager.clearTokens()
       } finally {
         setIsLoading(false)
       }

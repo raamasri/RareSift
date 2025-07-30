@@ -13,6 +13,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 1000 * 60 * 5, // 5 minutes
             retry: 1,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            // Add timeout and error handling
+            networkMode: 'offlineFirst',
           },
         },
       })
