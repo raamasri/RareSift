@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { CheckIcon, XMarkIcon, StarIcon } from '@heroicons/react/24/outline'
 import { SparklesIcon } from '@heroicons/react/24/solid'
+import ContactSalesForm from '@/components/forms/contact-sales-form'
 
 const plans = [
   {
@@ -77,6 +78,8 @@ const plans = [
 
 export default function PricingSection() {
   const [isAnnual, setIsAnnual] = useState(false)
+  const [isContactSalesOpen, setIsContactSalesOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('Enterprise')
 
   return (
     <div className="py-24 sm:py-32 bg-white dark:bg-gray-900" id="pricing">
@@ -168,16 +171,28 @@ export default function PricingSection() {
                 </div>
 
                 <div className="mt-8">
-                  <Link
-                    href="/app"
-                    className={`block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-colors ${
-                      plan.popular
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
+                  {plan.cta === 'Contact Sales' ? (
+                    <button
+                      onClick={() => {
+                        setSelectedPlan(plan.name)
+                        setIsContactSalesOpen(true)
+                      }}
+                      className="block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-colors bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                    >
+                      {plan.cta}
+                    </button>
+                  ) : (
+                    <Link
+                      href="/app"
+                      className={`block w-full rounded-xl px-6 py-3 text-center text-sm font-semibold transition-colors ${
+                        plan.popular
+                          ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                      }`}
+                    >
+                      {plan.cta}
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -250,15 +265,25 @@ export default function PricingSection() {
               Schedule Demo
             </Link>
             <span className="text-gray-300 dark:text-gray-600 hidden sm:block">•</span>
-            <Link
-              href="/app"
+            <button
+              onClick={() => {
+                setSelectedPlan('Enterprise')
+                setIsContactSalesOpen(true)
+              }}
               className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
             >
               Contact Sales
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Contact Sales Modal */}
+      <ContactSalesForm
+        isOpen={isContactSalesOpen}
+        onClose={() => setIsContactSalesOpen(false)}
+        selectedPlan={selectedPlan}
+      />
     </div>
   )
 }

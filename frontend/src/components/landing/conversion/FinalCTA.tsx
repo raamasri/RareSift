@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRightIcon, RocketLaunchIcon, ClockIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import DemoRequestForm from '@/components/forms/demo-request-form'
 
 export default function FinalCTA() {
+  const [isDemoFormOpen, setIsDemoFormOpen] = useState(false)
+  
   return (
     <section className="relative py-24 sm:py-32 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 overflow-hidden">
       {/* Background Effects */}
@@ -60,12 +64,12 @@ export default function FinalCTA() {
               Start Free Trial
               <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              href="/app"
+            <button
+              onClick={() => setIsDemoFormOpen(true)}
               className="group inline-flex items-center justify-center rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 transition-all duration-200"
             >
               Schedule Demo
-            </Link>
+            </button>
           </div>
 
           {/* Trust Signals */}
@@ -88,6 +92,12 @@ export default function FinalCTA() {
           </div>
         </div>
       </div>
+
+      {/* Demo Request Modal */}
+      <DemoRequestForm
+        isOpen={isDemoFormOpen}
+        onClose={() => setIsDemoFormOpen(false)}
+      />
     </section>
   )
 }

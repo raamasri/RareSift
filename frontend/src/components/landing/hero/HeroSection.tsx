@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { ArrowRightIcon, PlayIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import AnimatedBackground from './AnimatedBackground'
+import VideoModal from '@/components/ui/video-modal'
+import DemoRequestForm from '@/components/forms/demo-request-form'
 
 export default function HeroSection() {
   const [isVideoOpen, setIsVideoOpen] = useState(false)
+  const [isDemoFormOpen, setIsDemoFormOpen] = useState(false)
 
   return (
     <div className="relative isolate px-6 pt-14 lg:px-8 min-h-screen flex items-center">
@@ -158,6 +161,18 @@ export default function HeroSection() {
           }}
         />
       </div>
+
+      {/* Modals */}
+      <VideoModal 
+        isOpen={isVideoOpen}
+        onClose={() => setIsVideoOpen(false)}
+        title="RareSift Platform Demo"
+      />
+      
+      <DemoRequestForm
+        isOpen={isDemoFormOpen}
+        onClose={() => setIsDemoFormOpen(false)}
+      />
     </div>
   )
 }
