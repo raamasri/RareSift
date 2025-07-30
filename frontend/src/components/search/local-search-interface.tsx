@@ -251,7 +251,7 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <span>180 Frames Available</span>
+            <span>4,985 Frames Available</span>
           </div>
         </div>
       </div>
@@ -343,7 +343,7 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Search through 180 extracted frames from your 9 driving camera videos
+                  Search through 4,985 extracted frames from 22 videos (9 driving + 13 static cameras)
                 </p>
               </div>
               
@@ -424,7 +424,7 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
                   )}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Upload an image to find similar frames in your 180 available video frames
+                  Upload an image to find similar frames in your 4,985 available video frames
                 </p>
               </div>
             </div>
@@ -565,7 +565,7 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
               <div className="flex items-center space-x-4 text-xs text-slate-400 dark:text-slate-500">
                 <span>Demo Mode</span>
                 <span>•</span>
-                <span>180 frames available</span>
+                <span>4,985 frames available</span>
                 <span>•</span>
                 <span>Local processing</span>
               </div>
