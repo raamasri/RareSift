@@ -6,6 +6,7 @@ import Sidebar from '@/components/layout/sidebar'
 import { Dashboard } from '@/components/dashboard/dashboard'
 import { VideoUpload } from '@/components/upload/video-upload'
 import { SearchInterface } from '@/components/search/search-interface'
+import { LocalSearchPage } from '@/components/search/local-search-page'
 import VideoLibrary from '@/components/videos/video-library'
 import { ExportManager } from '@/components/export/export-manager'
 import Analytics from '@/components/analytics/analytics'
@@ -17,13 +18,14 @@ import DemoMode from '@/components/demo/demo-mode'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [useLocalData, setUseLocalData] = useState(true)
 
   const renderContent = () => {
     switch (activeTab) {
       case 'upload':
         return <VideoUpload />
       case 'search':
-        return <SearchInterface />
+        return useLocalData ? <LocalSearchPage /> : <SearchInterface />
       case 'videos':
         return <VideoLibrary />
       case 'exports':
