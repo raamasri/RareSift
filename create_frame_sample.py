@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""
+Create a representative sample of frames for the frontend demo
+
+This script selects a manageable subset of frames from the 3,674 extracted frames
+to create a diverse demo dataset for the search interface.
+"""
+
+import os
+import random
+from pathlib import Path
+from typing import Dict, List
+import shutil
+
+class FrameSampler:
+    def __init__(self):
+        self.frames_dir = Path(__file__).parent / "frontend" / "src" / "assets" / "demo-frames"
+        self.sample_dir = Path(__file__).parent / "frontend" / "src" / "assets" / "demo-frames-sample"
+        
+        # Create sample directory
+        os.makedirs(self.sample_dir, exist_ok=True)
+        
+        # Configuration
+        self.frames_per_video = 20  # Take 20 frames per video for variety
+        self.total_target = 200     # Target total frames for manageable frontend
+    
+    def get_video_groups(self) -> Dict[str, List[Path]]:
+        """Group frames by video"""
+        video_groups = {}
+        
+        for frame_file in self.frames_dir.glob("driving_camera_*.jpg"):
+            # Extract video ID from filename
+            parts = frame_file.stem.split('_')
+            if len(parts) >= 3:
+                video_id = f"{parts[0]}_{parts[1]}_{parts[2]}"  # e.g., "driving_camera_gh010001"
+                
+                if video_id not in video_groups:
+                    video_groups[video_id] = []
+                video_groups[video_id].append(frame_file)
+        
+        # Sort frames within each video by frame number
+        for video_id in video_groups:
+            video_groups[video_id].sort(key=lambda x: int(x.stem.split('_')[-1]))
+        
+        return video_groups
+    
+    def sample_frames_from_video(self, frames: List[Path], num_samples: int) -> List[Path]:
+        """Sample frames evenly distributed across video duration"""
+        if len(frames) <= num_samples:
+            return frames
+        
+        # Use evenly spaced sampling to get good coverage
+        step = len(frames) / num_samples
+        sampled_indices = [int(i * step) for i in range(num_samples)]
+        
+        return [frames[i] for i in sampled_indices]
+    
+    def create_sample_dataset(self):
+        """Create a representative sample of frames"""
+        print("🎯 Creating Frame Sample Dataset")
+        print("=" * 50)
+        
+        # Get video groups
+        video_groups = self.get_video_groups()
+        
+        print(f"📂 Found {len(video_groups)} videos with frames:")
+        for video_id, frames in video_groups.items():
+            print(f"  - {video_id}: {len(frames)} frames")
+        
+        # Sample frames from each video
+        all_sampled_frames = []
+        sample_info = {}
+        
+        for video_id, frames in video_groups.items():
+            sampled_frames = self.sample_frames_from_video(frames, self.frames_per_video)
+            all_sampled_frames.extend(sampled_frames)
+            sample_info[video_id] = {
+                "total_frames": len(frames),
+                "sampled_frames": len(sampled_frames),
+                "frame_files": [f.name for f in sampled_frames]
+            }
+            print(f"  ✅ {video_id}: sampled {len(sampled_frames)} from {len(frames)} frames")
+        
+        print(f"\n📊 Total sampled frames: {len(all_sampled_frames)}")
+        
+        # If we have too many frames, randomly sample to target
+        if len(all_sampled_frames) > self.total_target:
+            print(f"🎲 Randomly selecting {self.total_target} frames from {len(all_sampled_frames)} sampled frames")
+            all_sampled_frames = random.sample(all_sampled_frames, self.total_target)
+        
+        # Copy sampled frames to sample directory
+        print(f"\n📁 Copying {len(all_sampled_frames)} frames to sample directory...")
+        
+        for frame_file in all_sampled_frames:
+            target_file = self.sample_dir / frame_file.name
+            shutil.copy2(frame_file, target_file)
+        
+        print(f"✅ Sample dataset created with {len(all_sampled_frames)} frames")
+        print(f"📁 Saved to: {self.sample_dir}")
+        
+        # Generate TypeScript imports for sampled frames
+        self.generate_sample_imports(all_sampled_frames)
+        
+        return sample_info
+    
+    def generate_sample_imports(self, sampled_frames: List[Path]):
+        """Generate TypeScript imports for sampled frames"""
+        print(f"\n📝 Generating TypeScript imports...")
+        
+        # Sort frames for consistent ordering
+        sampled_frames.sort(key=lambda x: x.name)
+        
+        import_file = Path(__file__).parent / "frontend_sample_imports.ts"
+        
+        with open(import_file, 'w') as f:
+            f.write("// Auto-generated frame imports for RareSift local search\n")
+            f.write(f"// Sample of {len(sampled_frames)} frames from comprehensive extraction\n")
+            f.write("// Generated by create_frame_sample.py\n\n")
+            
+            # Generate imports
+            for frame_file in sampled_frames:
+                # Convert filename to valid TypeScript variable name
+                var_name = frame_file.stem.replace('-', '_').replace(' ', '_')
+                f.write(f"import {var_name} from '@/assets/demo-frames-sample/{frame_file.name}'\n")
+            
+            f.write("\n// Frame metadata for search database\n")
+            f.write("export interface FrameData {\n")
+            f.write("  id: string\n")
+            f.write("  frame_image: any\n")
+            f.write("  confidence: number\n")
+            f.write("  video_source: string\n")
+            f.write("  timestamp: number\n")
+            f.write("  metadata: {\n")
+            f.write("    weather: string\n")
+            f.write("    time_of_day: string\n")
+            f.write("    location: string\n")
+            f.write("    category: string\n")
+            f.write("  }\n")
+            f.write("}\n\n")
+            
+            f.write("// Generate search database from sampled frames\n")
+            f.write("export const SAMPLE_SEARCH_DATABASE: FrameData[] = [\n")
+            
+            for i, frame_file in enumerate(sampled_frames):
+                var_name = frame_file.stem.replace('-', '_').replace(' ', '_')
+                
+                # Parse video info from filename
+                parts = frame_file.stem.split('_')
+                video_id = f"{parts[2].upper()}.MP4"  # e.g., "GH010001.MP4"
+                frame_num = int(parts[-1])
+                timestamp = frame_num  # Assuming 1fps extraction
+                
+                confidence = 95 - (i % 30)  # Vary confidence scores
+                
+                f.write(f"  {{\n")
+                f.write(f"    id: '{i+1}',\n")
+                f.write(f"    frame_image: {var_name},\n")
+                f.write(f"    confidence: {confidence},\n")
+                f.write(f"    video_source: '{video_id}',\n")
+                f.write(f"    timestamp: {timestamp},\n")
+                f.write(f"    metadata: {{\n")
+                f.write(f"      weather: 'sunny',\n")
+                f.write(f"      time_of_day: 'day',\n")
+                f.write(f"      location: 'Highway driving',\n")
+                f.write(f"      category: 'driving_camera'\n")
+                f.write(f"    }}\n")
+                f.write(f"  }},\n")
+            
+            f.write("]\n")
+        
+        print(f"  ✅ TypeScript imports generated: {import_file}")
+        print(f"  📋 Generated {len(sampled_frames)} frame imports and search database")
+
+def main():
+    """Main entry point"""
+    try:
+        sampler = FrameSampler()
+        sampler.create_sample_dataset()
+        print(f"\n🎉 Frame sampling complete!")
+        print(f"💡 Next: Update your search interface to import from 'frontend_sample_imports.ts'")
+    except Exception as e:
+        print(f"\n❌ Sampling failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
