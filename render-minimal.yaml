@@ -1,0 +1,39 @@
+services:
+  # Backend Service (FastAPI) - Minimal Version
+  - type: web
+    name: raresift-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile.minimal
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    branch: main
+    healthCheckPath: /health
+    buildCommand: echo "Building minimal backend..."
+    startCommand: ./start-minimal.sh
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: raresift-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: raresift-redis
+          property: connectionString
+
+databases:
+  - name: raresift-postgres
+    databaseName: raresift
+    user: postgres
+    region: oregon
+    plan: free
+    
+  - name: raresift-redis
+    type: redis
+    region: oregon
+    plan: free
