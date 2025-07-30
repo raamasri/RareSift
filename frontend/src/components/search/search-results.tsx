@@ -11,7 +11,7 @@ import {
   PlayIcon,
   FilmIcon
 } from '@heroicons/react/24/outline'
-import { SearchResponse, SearchResult, videoPreviewApi, exportApi } from '@/lib/api'
+import { SearchResponse, SearchResult, exportApi } from '@/lib/api'
 import { formatDistanceToNow } from 'date-fns'
 import clsx from 'clsx'
 import VideoPlayer from '@/components/video/video-player'
@@ -247,11 +247,16 @@ export function SearchResults({ results }: SearchResultsProps) {
               {/* Enhanced Frame Image */}
               <div className="relative aspect-video bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
                 <Image
-                  src={videoPreviewApi.getFrameThumbnail(result.frame_id, 400)}
+                  src={result.frame_url || result.frame_path}
                   alt={`Frame at ${formatTimestamp(result.timestamp)}`}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  onError={(e) => {
+                    // Fallback to a sample demo frame if image fails to load
+                    const target = e.target as HTMLImageElement
+                    target.src = '/assets/demo-frames/driving_camera_gh010001_frame_240.jpg'
+                  }}
                 />
                 
                 {/* Enhanced Selection Overlay */}
@@ -309,8 +314,14 @@ export function SearchResults({ results }: SearchResultsProps) {
                 </div>
 
                 {/* Hover Play Button */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center rs-shadow-lg backdrop-blur-sm">
+                <div 
+                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent triggering selection
+                    handlePlayVideo(result.video_id, result.timestamp)
+                  }}
+                >
+                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center rs-shadow-lg backdrop-blur-sm hover:bg-white/95 hover:scale-110 transition-all duration-200">
                     <PlayIcon className="h-8 w-8 text-slate-700 ml-1" />
                   </div>
                 </div>

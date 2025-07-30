@@ -1,9 +1,7 @@
 'use client'
 
 import React, { useRef, useEffect, useState } from 'react'
-import { videoPreviewApi, type VideoInfo } from '@/lib/api'
-import { useQuery } from '@tanstack/react-query'
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
+import { PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
 
 interface VideoPlayerProps {
   videoId: number
@@ -11,6 +9,35 @@ interface VideoPlayerProps {
   className?: string
   autoPlay?: boolean
   showControls?: boolean
+}
+
+// Map video IDs to actual video filenames based on our LOCAL_VIDEOS data
+const getVideoFilename = (videoId: number): string => {
+  const videoMap: { [key: number]: string } = {
+    1: 'GH010001.MP4',
+    2: 'GH010002.MP4', 
+    3: 'GH010003.MP4',
+    4: 'GH010004.MP4',
+    5: 'GH010005.MP4',
+    6: 'GH010006.MP4',
+    7: 'GH010007.MP4',
+    8: 'GH010010.MP4',
+    9: 'GH020010.MP4',
+    10: 'GH010031.MP4',
+    11: 'GH010032.MP4',
+    12: 'GH010033.MP4',
+    13: 'GH010034.MP4',
+    14: 'GH010035.MP4',
+    15: 'GH010036.MP4',
+    16: 'GH010037.MP4',
+    17: 'GH010038.MP4',
+    18: 'GH010039.MP4',
+    19: 'GH010041.MP4',
+    20: 'GH010042.MP4',
+    21: 'GH010043.MP4',
+    22: 'GH010045.MP4'
+  }
+  return videoMap[videoId] || `VIDEO_${videoId}.MP4`
 }
 
 export default function VideoPlayer({
@@ -25,29 +52,40 @@ export default function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Get video info
-  const { data: videoInfo } = useQuery<VideoInfo>({
-    queryKey: ['videoInfo', videoId],
-    queryFn: () => videoPreviewApi.getVideoInfo(videoId),
-  })
-
-  // Set up video src
-  const videoSrc = videoPreviewApi.getVideoStream(videoId)
+  const videoFilename = getVideoFilename(videoId)
+  // For demo purposes, we'll show a placeholder since we don't have actual video files accessible
+  const videoSrc = `/video_assets/${videoFilename}` // This would be the path if videos were served statically
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
     const handleLoadedData = () => {
+      setIsLoading(false)
+      setError(null)
       setDuration(video.duration)
       if (startTime > 0) {
         video.currentTime = startTime
       }
       if (autoPlay) {
-        video.play()
+        video.play().catch(e => {
+          console.warn('Autoplay failed:', e)
+        })
         setIsPlaying(true)
       }
+    }
+
+    const handleLoadStart = () => {
+      setIsLoading(true)
+      setError(null)
+    }
+
+    const handleError = () => {
+      setIsLoading(false)
+      setError('Video file not available in demo mode')
     }
 
     const handleTimeUpdate = () => {
@@ -57,13 +95,17 @@ export default function VideoPlayer({
     const handlePlay = () => setIsPlaying(true)
     const handlePause = () => setIsPlaying(false)
 
+    video.addEventListener('loadstart', handleLoadStart)
     video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('error', handleError)
     video.addEventListener('timeupdate', handleTimeUpdate)
     video.addEventListener('play', handlePlay)
     video.addEventListener('pause', handlePause)
 
     return () => {
+      video.removeEventListener('loadstart', handleLoadStart)
       video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('error', handleError)
       video.removeEventListener('timeupdate', handleTimeUpdate)
       video.removeEventListener('play', handlePlay)
       video.removeEventListener('pause', handlePause)
@@ -72,18 +114,20 @@ export default function VideoPlayer({
 
   const togglePlay = () => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || error) return
 
     if (isPlaying) {
       video.pause()
     } else {
-      video.play()
+      video.play().catch(e => {
+        console.warn('Play failed:', e)
+      })
     }
   }
 
   const toggleMute = () => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || error) return
 
     video.muted = !video.muted
     setIsMuted(video.muted)
@@ -91,7 +135,7 @@ export default function VideoPlayer({
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const video = videoRef.current
-    if (!video || !duration) return
+    if (!video || !duration || error) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
@@ -106,62 +150,98 @@ export default function VideoPlayer({
   }
 
   return (
-    <div className={`relative bg-black rounded-lg overflow-hidden ${className}`}>
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        className="w-full h-full object-contain"
-        playsInline
-      />
-      
-      {showControls && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-          {/* Progress bar */}
-          <div
-            className="w-full h-1 bg-white/30 rounded-full mb-3 cursor-pointer"
-            onClick={handleSeek}
-          >
-            <div
-              className="h-full bg-blue-500 rounded-full transition-all"
-              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-            />
-          </div>
-          
-          {/* Controls */}
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center space-x-2">
-              <button onClick={togglePlay} className="hover:text-blue-400 transition-colors">
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-              </button>
-              
-              <button onClick={toggleMute} className="hover:text-blue-400 transition-colors">
-                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </button>
-              
-              <span className="text-sm">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
+    <div className={`relative bg-slate-900 rounded-lg overflow-hidden ${className}`}>
+      {error ? (
+        // Demo mode placeholder with frame preview
+        <div className="w-full h-64 lg:h-96 bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center text-white p-8">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
+              <PlayIcon className="h-10 w-10 text-indigo-400" />
             </div>
-            
-            {videoInfo && (
-              <div className="text-sm text-white/80">
-                {videoInfo.filename}
-              </div>
-            )}
+            <h3 className="text-xl font-semibold text-white">{videoFilename}</h3>
+            <p className="text-slate-300 text-sm max-w-md">
+              Video playback at timestamp {formatTime(startTime)} would show here in production.
+            </p>
+            <div className="flex flex-col space-y-2 text-xs text-slate-400">
+              <div>🎹 Video ID: {videoId}</div>
+              <div>⏰ Jump to: {formatTime(startTime)}</div>
+              <div>🎬 Filename: {videoFilename}</div>
+            </div>
+            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <p className="text-amber-300 text-sm font-medium">Demo Mode</p>
+              <p className="text-amber-200/80 text-xs mt-1">
+                In production, this would play the actual video file and jump to the exact frame where the search match was found.
+              </p>
+            </div>
           </div>
         </div>
-      )}
-      
-      {/* Play overlay for when paused */}
-      {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <button
-            onClick={togglePlay}
-            className="bg-white/20 hover:bg-white/30 rounded-full p-4 transition-colors"
-          >
-            <Play size={32} className="text-white ml-1" />
-          </button>
-        </div>
+      ) : (
+        <>
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            className="w-full h-full object-contain"
+            playsInline
+            crossOrigin="anonymous"
+          />
+          
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+              <div className="flex flex-col items-center space-y-4 text-white">
+                <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm">Loading {videoFilename}...</p>
+              </div>
+            </div>
+          )}
+          
+          {showControls && !isLoading && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              {/* Progress bar */}
+              <div
+                className="w-full h-1 bg-white/30 rounded-full mb-3 cursor-pointer"
+                onClick={handleSeek}
+              >
+                <div
+                  className="h-full bg-indigo-500 rounded-full transition-all"
+                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                />
+              </div>
+              
+              {/* Controls */}
+              <div className="flex items-center justify-between text-white">
+                <div className="flex items-center space-x-3">
+                  <button onClick={togglePlay} className="hover:text-indigo-400 transition-colors">
+                    {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+                  </button>
+                  
+                  <button onClick={toggleMute} className="hover:text-indigo-400 transition-colors">
+                    {isMuted ? <SpeakerXMarkIcon className="h-5 w-5" /> : <SpeakerWaveIcon className="h-5 w-5" />}
+                  </button>
+                  
+                  <span className="text-sm font-mono">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                </div>
+                
+                <div className="text-sm text-white/80 font-medium">
+                  {videoFilename}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Play overlay for when paused */}
+          {!isPlaying && !isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <button
+                onClick={togglePlay}
+                className="bg-white/20 hover:bg-white/30 rounded-full p-6 transition-all duration-200 hover:scale-110"
+              >
+                <PlayIcon className="h-8 w-8 text-white ml-1" />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

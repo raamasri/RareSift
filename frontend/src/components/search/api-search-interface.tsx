@@ -171,7 +171,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
   }
 
   const handleLocalTextSearch = async () => {
-    // Fallback to local search with mock results
+    // Fallback to local search with mock results using actual demo frames
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400))
     
     const mockResults: SearchResponse = {
@@ -181,8 +181,9 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           frame_id: 1,
           video_id: 1,
           timestamp: 45,
-          similarity: 0.85,
-          frame_path: '/api/frames/1/thumbnail',
+          similarity: 0.89,
+          frame_path: '/assets/demo-frames/driving_camera_gh010001_frame_240.jpg',
+          frame_url: '/assets/demo-frames/driving_camera_gh010001_frame_240.jpg',
           metadata: {
             weather: 'sunny',
             time_of_day: 'day',
@@ -190,9 +191,54 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           },
           video_filename: 'GH010001.MP4',
           video_duration: 600
+        },
+        {
+          frame_id: 2,
+          video_id: 2,
+          timestamp: 78,
+          similarity: 0.84,
+          frame_path: '/assets/demo-frames/driving_camera_gh010002_frame_084.jpg',
+          frame_url: '/assets/demo-frames/driving_camera_gh010002_frame_084.jpg',
+          metadata: {
+            weather: 'sunny',
+            time_of_day: 'day',
+            location: 'Highway driving'
+          },
+          video_filename: 'GH010002.MP4',
+          video_duration: 650
+        },
+        {
+          frame_id: 3,
+          video_id: 6,
+          timestamp: 123,
+          similarity: 0.82,
+          frame_path: '/assets/demo-frames/driving_camera_gh010006_frame_481.jpg',
+          frame_url: '/assets/demo-frames/driving_camera_gh010006_frame_481.jpg',
+          metadata: {
+            weather: 'sunny',
+            time_of_day: 'day',
+            location: 'Highway driving'
+          },
+          video_filename: 'GH010006.MP4',
+          video_duration: 720
+        },
+        {
+          frame_id: 4,
+          video_id: 10,
+          timestamp: 74,
+          similarity: 0.76,
+          frame_path: '/assets/demo-frames/static_camera_gh010034_frame_074.jpg',
+          frame_url: '/assets/demo-frames/static_camera_gh010034_frame_074.jpg',
+          metadata: {
+            weather: 'sunny',
+            time_of_day: 'day',
+            location: 'Intersection monitoring'
+          },
+          video_filename: 'GH010034.MP4',
+          video_duration: 480
         }
       ],
-      total_found: 1,
+      total_found: 4,
       search_time_ms: Math.round(50 + Math.random() * 150),
       query_text: query.trim(),
       filters: {}
