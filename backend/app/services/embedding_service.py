@@ -5,7 +5,9 @@ import os
 from PIL import Image
 from typing import List, Optional, Union
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import time
+import asyncio
 
 from app.core.config import settings
 from app.models.video import Frame, Embedding, Search
@@ -13,59 +15,86 @@ from app.models.video import Frame, Embedding, Search
 
 class EmbeddingService:
     """
-    Service for generating and managing CLIP embeddings
+    Service for generating and managing CLIP embeddings with pgvector optimization
     """
     
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = None
         self.preprocess = None
-        self._load_model()
+        self.is_initialized = False
     
-    def _load_model(self):
-        """Load CLIP model and preprocessing"""
+    async def initialize(self):
+        """Initialize the embedding service asynchronously"""
+        if not self.is_initialized:
+            await self._load_model()
+            self.is_initialized = True
+    
+    async def _load_model(self):
+        """Load CLIP model and preprocessing asynchronously"""
         try:
-            self.model, self.preprocess = clip.load(settings.clip_model_name, device=self.device)
+            # Run in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            self.model, self.preprocess = await loop.run_in_executor(
+                None, lambda: clip.load(settings.clip_model_name, device=self.device)
+            )
             print(f"CLIP model {settings.clip_model_name} loaded on {self.device}")
         except Exception as e:
             print(f"Failed to load CLIP model: {str(e)}")
             raise e
     
-    def encode_image(self, image_path: str) -> np.ndarray:
+    
+    async def encode_image(self, image_input: Union[str, Image.Image]) -> np.ndarray:
         """
         Generate CLIP embedding for an image
         """
-        try:
-            # Load and preprocess image
-            image = Image.open(image_path).convert("RGB")
-            image_input = self.preprocess(image).unsqueeze(0).to(self.device)
+        if not self.is_initialized:
+            await self.initialize()
             
-            # Generate embedding
-            with torch.no_grad():
-                image_features = self.model.encode_image(image_input)
-                # Normalize embedding
-                image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-                
-            return image_features.cpu().numpy().flatten()
+        try:
+            # Handle both file path and PIL Image
+            if isinstance(image_input, str):
+                image = Image.open(image_input).convert("RGB")
+            else:
+                image = image_input.convert("RGB")
+            
+            # Run preprocessing and inference in executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            
+            def _encode():
+                image_tensor = self.preprocess(image).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    image_features = self.model.encode_image(image_tensor)
+                    # Normalize embedding
+                    image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+                return image_features.cpu().numpy().flatten()
+            
+            return await loop.run_in_executor(None, _encode)
             
         except Exception as e:
+            image_path = image_input if isinstance(image_input, str) else "PIL_Image"
             raise Exception(f"Failed to encode image {image_path}: {str(e)}")
     
-    def encode_text(self, text: str) -> np.ndarray:
+    async def encode_text(self, text: str) -> np.ndarray:
         """
         Generate CLIP embedding for text
         """
-        try:
-            # Tokenize text
-            text_input = clip.tokenize([text]).to(self.device)
+        if not self.is_initialized:
+            await self.initialize()
             
-            # Generate embedding
-            with torch.no_grad():
-                text_features = self.model.encode_text(text_input)
-                # Normalize embedding
-                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-                
-            return text_features.cpu().numpy().flatten()
+        try:
+            # Run tokenization and inference in executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            
+            def _encode():
+                text_input = clip.tokenize([text]).to(self.device)
+                with torch.no_grad():
+                    text_features = self.model.encode_text(text_input)
+                    # Normalize embedding
+                    text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                return text_features.cpu().numpy().flatten()
+            
+            return await loop.run_in_executor(None, _encode)
             
         except Exception as e:
             raise Exception(f"Failed to encode text '{text}': {str(e)}")
@@ -116,7 +145,7 @@ class EmbeddingService:
             db.rollback()
             raise Exception(f"Failed to generate frame embeddings: {str(e)}")
     
-    def search_similar_frames(
+    async def search_similar_frames(
         self, 
         db: Session, 
         query_embedding: np.ndarray, 
@@ -125,69 +154,91 @@ class EmbeddingService:
         filters: Optional[dict] = None
     ) -> dict:
         """
-        Search for frames similar to query embedding using cosine similarity
+        Search for frames similar to query embedding using pgvector cosine similarity
         """
         try:
             start_time = time.time()
             
-            # Base query for embeddings with frame and video data  
-            from app.models.video import Video
-            query = db.query(
-                Embedding,
-                Frame,
-                Video
-            ).join(Frame, Embedding.frame_id == Frame.id).join(Video, Frame.video_id == Video.id)
+            # Convert numpy array to list for pgvector
+            query_vector = query_embedding.tolist()
             
-            # Apply filters if provided
+            # Build pgvector similarity query with filters
+            filter_conditions = []
+            
             if filters:
                 if filters.get("time_of_day"):
-                    from app.models.video import Video
-                    query = query.filter(Video.time_of_day == filters["time_of_day"])
+                    filter_conditions.append(f"v.time_of_day = '{filters['time_of_day']}'")
                 
                 if filters.get("weather"):
-                    from app.models.video import Video
-                    query = query.filter(Video.weather == filters["weather"])
+                    filter_conditions.append(f"v.weather = '{filters['weather']}'")
+                
+                if filters.get("category"):
+                    filter_conditions.append(f"v.video_metadata->>'camera_type' = '{filters['category']}'")
                 
                 if filters.get("speed_min"):
-                    query = query.filter(Frame.speed >= filters["speed_min"])
+                    filter_conditions.append(f"f.speed >= {filters['speed_min']}")
                 
                 if filters.get("speed_max"):
-                    query = query.filter(Frame.speed <= filters["speed_max"])
+                    filter_conditions.append(f"f.speed <= {filters['speed_max']}")
             
-            # Get all embeddings
-            results = query.all()
+            # Construct WHERE clause
+            where_clause = ""
+            if filter_conditions:
+                where_clause = "WHERE " + " AND ".join(filter_conditions)
             
-            # Calculate similarities
+            # Use pgvector's cosine distance operator for efficient similarity search
+            # Note: pgvector uses distance (lower = more similar), so we convert to similarity
+            raw_query = text(f"""
+                SELECT 
+                    f.id as frame_id,
+                    v.id as video_id,
+                    f.timestamp,
+                    1 - (e.embedding <=> :query_vector) as similarity,
+                    f.frame_path,
+                    f.frame_metadata,
+                    v.original_filename as video_filename,
+                    v.duration as video_duration
+                FROM embeddings e
+                JOIN frames f ON e.frame_id = f.id
+                JOIN videos v ON f.video_id = v.id
+                {where_clause}
+                HAVING 1 - (e.embedding <=> :query_vector) >= :similarity_threshold
+                ORDER BY e.embedding <=> :query_vector
+                LIMIT :limit_results
+            """)
+            
+            # Execute the query
+            result = db.execute(raw_query, {
+                "query_vector": query_vector,
+                "similarity_threshold": similarity_threshold,
+                "limit_results": limit
+            })
+            
+            # Format results
             similarities = []
-            for embedding, frame, video in results:
-                # Convert embedding back to numpy array
-                emb_vector = np.array(embedding.embedding)
-                
-                # Calculate cosine similarity
-                similarity = np.dot(query_embedding, emb_vector) / (
-                    np.linalg.norm(query_embedding) * np.linalg.norm(emb_vector)
-                )
-                
-                if similarity >= similarity_threshold:
-                    similarities.append({
-                        "frame_id": frame.id,
-                        "video_id": video.id,
-                        "timestamp": frame.timestamp,
-                        "similarity": float(similarity),
-                        "frame_path": frame.frame_path,
-                        "metadata": frame.frame_metadata or {},
-                        "video_filename": video.original_filename,
-                        "video_duration": video.duration
-                    })
+            for row in result:
+                similarities.append({
+                    "frame_id": row.frame_id,
+                    "video_id": row.video_id,
+                    "timestamp": row.timestamp,
+                    "similarity": float(row.similarity),
+                    "frame_path": row.frame_path,
+                    "metadata": row.frame_metadata or {},
+                    "video_filename": row.video_filename,
+                    "video_duration": row.video_duration
+                })
             
-            # Sort by similarity and limit results
-            similarities.sort(key=lambda x: x["similarity"], reverse=True)
+            search_time = int((time.time() - start_time) * 1000)
             
-            search_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+            # For total_found, we approximate it as we don't want to run a separate count query
+            # for performance reasons with large datasets
+            total_found = len(similarities)
+            if len(similarities) == limit:
+                total_found = f"{limit}+"  # Indicate there may be more results
             
             return {
-                "results": similarities[:limit],
-                "total_found": len(similarities),
+                "results": similarities,
+                "total_found": total_found,
                 "search_time_ms": search_time
             }
             
@@ -207,10 +258,10 @@ class EmbeddingService:
         """
         try:
             # Generate embedding for query text
-            query_embedding = self.encode_text(query_text)
+            query_embedding = await self.encode_text(query_text)
             
             # Search similar frames
-            search_results = self.search_similar_frames(
+            search_results = await self.search_similar_frames(
                 db, query_embedding, limit, similarity_threshold, filters
             )
             
@@ -249,10 +300,10 @@ class EmbeddingService:
         """
         try:
             # Generate embedding for query image
-            query_embedding = self.encode_image(image_path)
+            query_embedding = await self.encode_image(image_path)
             
             # Search similar frames
-            search_results = self.search_similar_frames(
+            search_results = await self.search_similar_frames(
                 db, query_embedding, limit, similarity_threshold, filters
             )
             
