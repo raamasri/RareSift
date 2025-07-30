@@ -206,6 +206,10 @@ uploads/
 *.png
 *.gif
 
+# Allow demo frames for the landing page
+!frontend/src/assets/demo-frames/*.jpg
+!frontend/public/demo-assets/frames/*.jpg
+
 # Docker
 .dockerignore
 

@@ -11,6 +11,17 @@ import {
 import Link from 'next/link'
 import Image from 'next/image'
 
+// Import demo frame images
+import drive01Frame000 from '@/assets/demo-frames/drive_01_frame_000.jpg'
+import drive01Frame001 from '@/assets/demo-frames/drive_01_frame_001.jpg'
+import drive01Frame002 from '@/assets/demo-frames/drive_01_frame_002.jpg'
+import drive02Frame000 from '@/assets/demo-frames/drive_02_frame_000.jpg'
+import drive02Frame001 from '@/assets/demo-frames/drive_02_frame_001.jpg'
+import drive02Frame002 from '@/assets/demo-frames/drive_02_frame_002.jpg'
+import static03Frame000 from '@/assets/demo-frames/static_03_frame_000.jpg'
+import static04Frame000 from '@/assets/demo-frames/static_04_frame_000.jpg'
+import static04Frame001 from '@/assets/demo-frames/static_04_frame_001.jpg'
+
 // Real demo data from processed videos
 const demoQueries = [
   "cars turning left in intersection",
@@ -31,7 +42,7 @@ const demoScenarios = [
         timestamp: "00:00:10",
         confidence: 94,
         video_source: "GH010001.MP4",
-        frame_path: "/demo-assets/frames/drive_01_frame_000.jpg",
+        frame_image: drive01Frame000,
         category: "traffic_maneuvers"
       },
       {
@@ -40,7 +51,7 @@ const demoScenarios = [
         timestamp: "00:00:30",
         confidence: 89,
         video_source: "GH010002.MP4", 
-        frame_path: "/demo-assets/frames/drive_02_frame_001.jpg",
+        frame_image: drive02Frame001,
         category: "traffic_maneuvers"
       },
       {
@@ -49,7 +60,7 @@ const demoScenarios = [
         timestamp: "00:00:30", 
         confidence: 86,
         video_source: "GH010032.MP4",
-        frame_path: "/demo-assets/frames/static_04_frame_001.jpg",
+        frame_image: static04Frame001,
         category: "traffic_maneuvers"
       }
     ]
@@ -63,7 +74,7 @@ const demoScenarios = [
         timestamp: "00:00:30",
         confidence: 91,
         video_source: "GH010001.MP4",
-        frame_path: "/demo-assets/frames/drive_01_frame_001.jpg",
+        frame_image: drive01Frame001,
         category: "pedestrian_activity"
       },
       {
@@ -72,7 +83,7 @@ const demoScenarios = [
         timestamp: "00:01:00", 
         confidence: 87,
         video_source: "GH010002.MP4",
-        frame_path: "/demo-assets/frames/drive_02_frame_002.jpg",
+        frame_image: drive02Frame002,
         category: "pedestrian_activity"
       }
     ]
@@ -86,7 +97,7 @@ const demoScenarios = [
         timestamp: "00:01:00",
         confidence: 93,
         video_source: "GH010001.MP4", 
-        frame_path: "/demo-assets/frames/drive_01_frame_002.jpg",
+        frame_image: drive01Frame002,
         category: "weather_conditions"
       },
       {
@@ -95,7 +106,7 @@ const demoScenarios = [
         timestamp: "00:00:10",
         confidence: 88,
         video_source: "GH010031.MP4",
-        frame_path: "/demo-assets/frames/static_03_frame_000.jpg", 
+        frame_image: static03Frame000, 
         category: "weather_conditions"
       }
     ]
@@ -109,7 +120,7 @@ const demoScenarios = [
         timestamp: "00:00:10",
         confidence: 92,
         video_source: "GH010002.MP4",
-        frame_path: "/demo-assets/frames/drive_02_frame_000.jpg",
+        frame_image: drive02Frame000,
         category: "urban_driving"
       },
       {
@@ -118,7 +129,7 @@ const demoScenarios = [
         timestamp: "00:00:10", 
         confidence: 85,
         video_source: "GH010032.MP4",
-        frame_path: "/demo-assets/frames/static_04_frame_000.jpg",
+        frame_image: static04Frame000,
         category: "urban_driving"
       }
     ]
@@ -274,7 +285,7 @@ export default function InteractiveDemo() {
                           {/* Real Video Thumbnail */}
                           <div className="h-32 rounded-lg mb-3 relative overflow-hidden bg-gray-200 dark:bg-gray-600">
                             <Image
-                              src={result.frame_path}
+                              src={result.frame_image}
                               alt={result.title}
                               fill
                               className="object-cover"
