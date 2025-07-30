@@ -6,6 +6,9 @@ import FeatureGrid from '@/components/landing/features/FeatureGrid'
 import InteractiveDemo from '@/components/landing/features/InteractiveDemo'
 import StatsSection from '@/components/landing/social-proof/StatsSection'
 import TestimonialCarousel from '@/components/landing/social-proof/TestimonialCarousel'
+import PricingSection from '@/components/landing/pricing/PricingSection'
+import FinalCTA from '@/components/landing/conversion/FinalCTA'
+import LandingFooter from '@/components/landing/LandingFooter'
 
 export default function LandingPage() {
   return (
@@ -27,7 +30,11 @@ export default function LandingPage() {
         <TestimonialCarousel />
       </section>
       
-      {/* Pricing section will be added in Phase 4 */}
+      <PricingSection />
+      
+      <FinalCTA />
+      
+      <LandingFooter />
     </div>
   )
 }
