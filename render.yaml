@@ -1,12 +1,11 @@
 services:
   # Backend Service (FastAPI)
   - type: web
-    name: raresift-backend
+    name: RareSift-backend
     env: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
     region: oregon
-    plan: starter
+    plan: free
     branch: main
     healthCheckPath: /health
     envVars:
@@ -21,14 +20,13 @@ services:
 
   # Frontend Service (Next.js)
   - type: web
-    name: raresift-frontend
-    env: node
+    name: RareSift-frontend
+    env: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
     region: oregon
-    plan: starter
+    plan: free
     branch: main
-    rootDir: ./frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://raresift-backend.onrender.com
@@ -39,8 +37,8 @@ databases:
     user: postgres
     region: oregon
     plan: free
-
-# Redis for caching
+    
   - name: raresift-redis
+    type: redis
     region: oregon
     plan: free

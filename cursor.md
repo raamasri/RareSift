@@ -12,7 +12,7 @@ RareSift is a SAAS product that provides AI-driven search capabilities for drivi
 - **AI/ML**: OpenAI CLIP for video frame embeddings
 - **Storage**: AWS S3/Cloudflare R2 for video files
 - **Cache**: Redis for query caching
-- **Deployment**: Docker containers on Railway/Render + Vercel
+- **Deployment**: Docker containers on Render
 
 ### Project Structure
 ```
