@@ -481,7 +481,7 @@ export default function PricingCalculator() {
               </div>
               {billingCycle === 'annual' && (
                 <div className="text-sm text-green-600 mt-1">
-                  ${Math.round(calculatedPricing.effectiveMonthly)}/mo effective
+                  ${Math.round(calculatedPricing.effectiveMonthly || 0)}/mo effective
                 </div>
               )}
             </div>

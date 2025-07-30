@@ -129,7 +129,7 @@ export function SearchInterface({ onSearchResults }: SearchInterfaceProps) {
     
     // Combine and deduplicate
     const allSuggestions = [...matchingScenarios, ...contextualSuggestions]
-    const uniqueSuggestions = [...new Set(allSuggestions)]
+    const uniqueSuggestions = Array.from(new Set(allSuggestions))
     
     return uniqueSuggestions.slice(0, 8) // Limit to 8 suggestions
   }
