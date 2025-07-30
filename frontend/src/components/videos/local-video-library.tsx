@@ -31,33 +31,33 @@ interface LocalVideo {
   isProcessed: boolean
 }
 
-// Mock local video data based on actual video assets
+// Mock local video data based on actual video assets - ALL 22 videos processed in v0.6.0 with 4,985 frames
 const LOCAL_VIDEOS: LocalVideo[] = [
-  // Driving Camera Footage
+  // Driving Camera Footage (9 videos - all processed with frame extraction)
   { id: '1', filename: 'GH010001.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 127458304, estimatedDuration: 120, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '2', filename: 'GH010002.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 134217728, estimatedDuration: 135, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '3', filename: 'GH010003.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 141234560, estimatedDuration: 140, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '3', filename: 'GH010003.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 141234560, estimatedDuration: 140, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '4', filename: 'GH010004.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 156823040, estimatedDuration: 150, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '5', filename: 'GH010005.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 167772160, estimatedDuration: 165, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '5', filename: 'GH010005.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 167772160, estimatedDuration: 165, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '6', filename: 'GH010006.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 178956352, estimatedDuration: 175, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '7', filename: 'GH010007.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 189234176, estimatedDuration: 180, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '7', filename: 'GH010007.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 189234176, estimatedDuration: 180, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '8', filename: 'GH010010.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 198654976, estimatedDuration: 195, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '9', filename: 'GH020010.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 205623296, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '9', filename: 'GH020010.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 205623296, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: true },
   
-  // Static Camera Footage
+  // Static Camera Footage (13 videos - all processed with frame extraction)
   { id: '10', filename: 'GH010031.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 156823040, estimatedDuration: 180, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '11', filename: 'GH010032.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 167772160, estimatedDuration: 190, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '12', filename: 'GH010033.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 178956352, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '12', filename: 'GH010033.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 178956352, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '13', filename: 'GH010034.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 189234176, estimatedDuration: 210, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '14', filename: 'GH010035.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 198654976, estimatedDuration: 220, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '14', filename: 'GH010035.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 198654976, estimatedDuration: 220, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '15', filename: 'GH010036.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 205623296, estimatedDuration: 230, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '16', filename: 'GH010037.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 212992512, estimatedDuration: 240, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '16', filename: 'GH010037.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 212992512, estimatedDuration: 240, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '17', filename: 'GH010038.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 220361728, estimatedDuration: 250, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '18', filename: 'GH010039.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 227730944, estimatedDuration: 260, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '18', filename: 'GH010039.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 227730944, estimatedDuration: 260, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '19', filename: 'GH010041.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 235100160, estimatedDuration: 270, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '20', filename: 'GH010042.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 242469376, estimatedDuration: 280, fps: 30, width: 1920, height: 1080, isProcessed: false },
+  { id: '20', filename: 'GH010042.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 242469376, estimatedDuration: 280, fps: 30, width: 1920, height: 1080, isProcessed: true },
   { id: '21', filename: 'GH010043.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 249838592, estimatedDuration: 290, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '22', filename: 'GH010045.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 257207808, estimatedDuration: 300, fps: 30, width: 1920, height: 1080, isProcessed: false }
+  { id: '22', filename: 'GH010045.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 257207808, estimatedDuration: 300, fps: 30, width: 1920, height: 1080, isProcessed: true }
 ]
 
 export function LocalVideoLibrary() {
@@ -137,7 +137,7 @@ export function LocalVideoLibrary() {
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
           <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.total}</div>
             <div className="text-sm text-slate-600 dark:text-slate-300">Total Videos</div>
@@ -151,7 +151,11 @@ export function LocalVideoLibrary() {
             <div className="text-sm text-slate-600 dark:text-slate-300">Driving Camera</div>
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatFileSize(stats.totalSize)}</div>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.static}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-300">Static Camera</div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatFileSize(stats.totalSize)}</div>
             <div className="text-sm text-slate-600 dark:text-slate-300">Total Size</div>
           </div>
         </div>

@@ -167,7 +167,7 @@ export default function InteractiveDemo() {
                 Ready to Transform Your AV Development?
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
-                This demo searches 3,648 frames from 9 driving videos. Get access to search through terabytes of your own video data 
+                This demo searches 4,985 frames from 22 videos (9 driving + 13 static cameras). Get access to search through terabytes of your own video data 
                 with unlimited uploads, advanced filtering, and enterprise-grade performance.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
