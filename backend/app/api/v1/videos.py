@@ -9,7 +9,7 @@ import time
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate
+from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate, rate_limit_generous
 from app.models.video import Video
 from app.models.user import User
 from app.services.video_processor import VideoProcessor
