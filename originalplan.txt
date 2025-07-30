@@ -1,0 +1,106 @@
+	2.	RareSift – AI-driven search engine for driving scenarios and edge cases in AV datasets.
+	•	Core Features: Indexes huge volumes of driving logs (videos, LiDAR scans, radar data) using machine learning to tag and describe events. Supports natural language and example-based queries (e.g. “night-time pedestrian near miss” or “highway cut-in scenario”) to retrieve relevant clips within seconds. Provides tools to filter results by conditions (weather, location, sensor readings) and to visualize or export the found scenarios for further analysis or re-simulation.
+	•	Why It’s Timely & Different: Finding specific situations across millions of miles of recorded driving data is a major bottleneck – data scientists often waste time sifting through logs . What’s needed is software that can index and query this data at scale . RareSift uses the latest vision-language models to make unstructured sensor data queryable by content, not just by metadata. This is a leap from manual tagging or SQL queries on labels – you can literally ask for a scenario and get results. As AV testing shifts to a long-tail of rare events, this tool dramatically speeds up mining edge-case examples, aiding both training and validation.
+	•	Target Users: ADAS/AV validation teams, simulation engineers, and ML researchers at car manufacturers and autonomous driving companies. They would use RareSift to quickly pull up real-world examples of phenomena (e.g. abrupt cut-ins, confusing signage, rare accidents) to test or train their systems. It’s also useful for safety auditors looking for instances of certain behaviors in vast driving datasets.
+
+2) RareSift — NL/embedding search for edge cases in logs
+
+Status: Exists in parts, but not as a pure, vendor-neutral “search engine for your logs.”
+	•	What’s close today
+	•	Scale exposes natural-language search and autotagging to mine target scenarios, plus scenario tests.  
+	•	Voxel51 helps teams quickly find subsets/anomalies and cover edge cases across multimodal data.  
+	•	dRISK provides a scenario/edge-case knowledge graph and risk coverage (more external scenario supply than search in your private logs).   
+	•	Safety Pool (Deepen AI + WMG): community scenario database and exchange; simulation-ready.  
+	•	Foretellix: coverage-driven V&V with scenario definition (M-SDL) and measurement.   
+	•	White space you can target
+	•	A neutral layer that indexes your raw, multi-sensor driving logs and makes them queryable by natural language + example clips (not just pre-labeled metadata), returning synchronized video/LiDAR/radar snippets in seconds, and pushing one-click exports to sim/test. Many vendors do parts of this, but a focused “scenario search for your private corpora” with great recall/latency and connectors into existing stacks is still underserved.
+
+Here's a clear 3‑sprint (6‑week) MVP plan for RareSift, optimized for the YC application deadline (August 4), using available vector search tools and modern AI components.
+
+⸻
+
+🧪 MVP Goal (Trusted Demo by July 30)
+
+Provide a working prototype that lets an AV/ADAS team load video logs + minimal metadata, query them in natural language or by clip, and export synchronized scenario clips for downstream use. Fast results and real value with minimal LiDAR initially.
+
+⸻
+
+🛠️ Sprint Plan (Each sprint = 2 weeks)
+
+🚀 Sprint 1 (Weeks 1–2): Index + Simple NL Search over Video Logs
+	•	Ingest & preprocess a small set of publicly available AV drive logs or sample video clips with timestamps and vehicle state (e.g. speed/time/weather).
+	•	Extract embeddings for video frames/windows using an off‑the‑shelf model (e.g. CLIP visual embeddings).
+	•	Deploy a vector database (e.g. Milvus, Qdrant, OpenSearch vector engine) to index embeddings for efficient similarity search.  
+	•	Build a minimal UI for NL search: enter text (“pedestrian crossing at dusk”) or paste a query clip, hit “search” → show matching clips with metadata.
+	•	Basic filtering by time or speed.
+
+Deliverable: Working prototype where user types a query and gets relevant video snippets within seconds.
+
+Metrics to hit: Recall of top 10 @ ≥60%; latency <2 sec for queries.
+
+⸻
+
+🧠 Sprint 2 (Weeks 3–4): Clip-query + Basic Export
+	•	Add “query-by-example”: upload your video clip → embed and find similar scenes (aligned windows).
+	•	Add synchronized export: select results → package segments (video + metadata) into ZIP or dataset ready for training or sim pipelines.
+	•	Improve filtering: weather/time/class tags using simple heuristics or pretrained classifiers (e.g. day/night, rain detection).
+	•	Add usage logging & simple user/session tracking.
+
+Deliverable: Users can query by clip + NL, and export scenario packages for reuse.
+
+Metrics: Export workflow operable in under 60 seconds; users can find 10 relevant examples in one session.
+
+⸻
+
+🌐 Sprint 3 (Weeks 5–6): Polish UX, Add Metadata/Logging & Outreach Prep
+	•	Improve UI: metadata-rich results, thumbnails, playback scrubbers, filtering UI.
+	•	Implement scalable metadata pre-filter (e.g. speed > 30 mph, night, etc.) to reduce embedding scope and speed up queries.
+	•	Optional basic LiDAR tag ingestion (if sample data available): represent LiDAR embeddings and include in results.
+	•	Create marketing/demo site and pitch-ready documentation (use case description, ROI story, pricing model, call-to-action).
+	•	Prepare a design‑partner outreach email & follow-up plan to send to AV developers/OEMS/Tier‑1s.
+
+Deliverable: A polished web prototype that can be demoed live, with a pitch deck snippet and outreach materials.
+
+⸻
+
+🧑‍💻 Team & Tech Stack
+	•	1 full-stack engineer: backend for ingestion, UI development
+	•	1 ML/AI engineer: embedding extraction, vector search integration
+	•	Optionally 0.2–0.5 FTE safety/data engineer: ensure metadata labels, sample logs
+
+Key tools:
+	•	Embedding model (e.g. CLIP or domain fine-tuned model)
+	•	Vector DB: Milvus or Qdrant (open-source, scalable)   
+	•	UI: React or simple web frontend
+	•	Storage: local disk or S3
+	•	Metadata classifier heuristics: pretrained for weather/time tags
+
+⸻
+
+📅 Timeline vs YC Deadline
+
+Date	Sprint	Key Milestone
+Jul 19–Aug 1	Sprints 1–3	Built working prototype + demo video + documentation
+Aug 2	Buffer Day	Polish demo, record usage scenarios, capture screenshots
+Aug 3	YC Review	Internal review of prototype and YC application draft
+Aug 4	Submission	Submit YC application with live demo links/screenshots
+
+
+⸻
+
+📧 Example Outreach Pitch Snippet (for YC, partners)
+
+"We built RareSift, a search engine that lets your AV team find rare events in your private logs using natural language or a sample clip. Within 24 hours you can discover dozens of edge-case scenarios—no manual scanning needed. Packed as export-ready clips for training or simulation. Minimal setup, immediate ROI. Would you try a private pilot with 100 GB of sample logs?”
+
+⸻
+
+✅ Why YC will care
+	•	Developer-first utility tool: a picks‑and‑shovels product that directly boosts AV team productivity.
+	•	Bottoms‑up adoption: early traction can come from engineers at OEMs or AV startups, not just VPs.
+	•	AI-first but straightforward scope: embedding + vector search + export; clear demoable product.
+	•	Clear ROI: faster scenario mining, less wasted storage, faster model iteration.
+	•	Time urgency: fast build timeline hitting the YC application schedule naturally fits YC’s bias toward shipping quickly.
+
+⸻
+
+Let me know if you’d like me to expand into Sprint 4 (adding LiDAR/radar, richer filters, pipeline integrations), or craft a YC application project description + specific demo flow.
