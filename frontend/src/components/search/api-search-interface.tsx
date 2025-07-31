@@ -182,8 +182,8 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           video_id: 1,
           timestamp: 45,
           similarity: 0.89,
-          frame_path: '/assets/demo-frames/driving_camera_gh010001_frame_240.jpg',
-          frame_url: '/assets/demo-frames/driving_camera_gh010001_frame_240.jpg',
+          frame_path: '/demo-assets/frames/drive_01_frame_003.jpg',
+          frame_url: '/demo-assets/frames/drive_01_frame_003.jpg',
           metadata: {
             weather: 'sunny',
             time_of_day: 'day',
@@ -197,8 +197,8 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           video_id: 2,
           timestamp: 78,
           similarity: 0.84,
-          frame_path: '/assets/demo-frames/driving_camera_gh010002_frame_084.jpg',
-          frame_url: '/assets/demo-frames/driving_camera_gh010002_frame_084.jpg',
+          frame_path: '/demo-assets/frames/drive_02_frame_004.jpg',
+          frame_url: '/demo-assets/frames/drive_02_frame_004.jpg',
           metadata: {
             weather: 'sunny',
             time_of_day: 'day',
@@ -212,8 +212,8 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           video_id: 6,
           timestamp: 123,
           similarity: 0.82,
-          frame_path: '/assets/demo-frames/driving_camera_gh010006_frame_481.jpg',
-          frame_url: '/assets/demo-frames/driving_camera_gh010006_frame_481.jpg',
+          frame_path: '/demo-assets/frames/drive_03_frame_005.jpg',
+          frame_url: '/demo-assets/frames/drive_03_frame_005.jpg',
           metadata: {
             weather: 'sunny',
             time_of_day: 'day',
@@ -227,8 +227,8 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
           video_id: 10,
           timestamp: 74,
           similarity: 0.76,
-          frame_path: '/assets/demo-frames/static_camera_gh010034_frame_074.jpg',
-          frame_url: '/assets/demo-frames/static_camera_gh010034_frame_074.jpg',
+          frame_path: '/demo-assets/frames/static_03_frame_000.jpg',
+          frame_url: '/demo-assets/frames/static_03_frame_000.jpg',
           metadata: {
             weather: 'sunny',
             time_of_day: 'day',

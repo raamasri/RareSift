@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowRightIcon, PlayIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AnimatedBackground from './AnimatedBackground'
 import VideoModal from '@/components/ui/video-modal'
 import DemoRequestForm from '@/components/forms/demo-request-form'
@@ -10,9 +10,121 @@ import DemoRequestForm from '@/components/forms/demo-request-form'
 export default function HeroSection() {
   const [isVideoOpen, setIsVideoOpen] = useState(false)
   const [isDemoFormOpen, setIsDemoFormOpen] = useState(false)
+  const [scrollPhase, setScrollPhase] = useState<'loading' | 'spline-interaction' | 'normal'>('loading')
+  const heroRef = useRef<HTMLDivElement>(null)
+  const lastScrollTime = useRef(0)
+
+  useEffect(() => {
+    // Phase 1: Block ALL scrolling for 4 seconds
+    const initialTimer = setTimeout(() => {
+      setScrollPhase('spline-interaction')
+    }, 4000)
+
+    return () => {
+      clearTimeout(initialTimer)
+    }
+  }, [])
+
+  useEffect(() => {
+    let ticking = false
+
+    const handleScroll = (e: WheelEvent) => {
+      const now = Date.now()
+      
+      if (scrollPhase === 'loading') {
+        // Phase 1: Block ALL scrolling during loading
+        e.preventDefault()
+        e.stopPropagation()
+        return false
+      } else if (scrollPhase === 'spline-interaction') {
+        // Phase 2: Block page scrolling but allow Spline interaction
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Throttle scroll events and count ONE significant scroll
+        if (now - lastScrollTime.current > 500) {
+          if (Math.abs(e.deltaY) > 10) {
+            lastScrollTime.current = now
+            
+            // Forward to Spline for 3D interaction
+            if (!ticking) {
+              ticking = true
+              requestAnimationFrame(() => {
+                const splineViewer = document.querySelector('spline-viewer')
+                if (splineViewer) {
+                  splineViewer.dispatchEvent(new WheelEvent('wheel', {
+                    deltaY: e.deltaY,
+                    deltaX: e.deltaX,
+                    bubbles: true
+                  }))
+                }
+                ticking = false
+              })
+            }
+            
+            // After ONE scroll interaction, enable normal scrolling
+            setTimeout(() => {
+              setScrollPhase('normal')
+            }, 100)
+          }
+        }
+        return false
+      }
+      
+      // Phase 3: Allow normal page scrolling
+    }
+
+    const handleKeyboardScroll = (e: KeyboardEvent) => {
+      if (scrollPhase !== 'normal') {
+        const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']
+        if (scrollKeys.includes(e.key)) {
+          e.preventDefault()
+          
+          if (scrollPhase === 'spline-interaction') {
+            // Move to normal scrolling after keyboard interaction
+            setScrollPhase('normal')
+          }
+          return false
+        }
+      }
+    }
+
+    const handleTouchScroll = (e: TouchEvent) => {
+      if (scrollPhase !== 'normal') {
+        e.preventDefault()
+        
+        if (scrollPhase === 'spline-interaction') {
+          // Move to normal scrolling after touch interaction
+          setScrollPhase('normal')
+        }
+        return false
+      }
+    }
+
+    // Prevent page scrolling via CSS during loading and spline interaction
+    if (scrollPhase !== 'normal') {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    // Add event listeners
+    window.addEventListener('wheel', handleScroll, { passive: false })
+    window.addEventListener('keydown', handleKeyboardScroll, { passive: false })
+    window.addEventListener('touchmove', handleTouchScroll, { passive: false })
+
+    return () => {
+      window.removeEventListener('wheel', handleScroll)
+      window.removeEventListener('keydown', handleKeyboardScroll)
+      window.removeEventListener('touchmove', handleTouchScroll)
+      
+      // Cleanup CSS
+      document.body.style.overflow = 'unset'
+    }
+  }, [scrollPhase])
 
   return (
-    <div className="relative isolate px-6 pt-14 lg:px-8 min-h-screen flex items-center">
+    <div ref={heroRef} className="relative isolate px-6 pt-14 lg:px-8 min-h-screen flex items-center">
       <AnimatedBackground />
       
       {/* Background gradient */}
@@ -35,23 +147,23 @@ export default function HeroSection() {
           <div className="max-w-2xl">
             {/* Badge */}
             <div className="mb-8">
-              <div className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 px-6 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-600/20">
+              <div className="inline-flex items-center rounded-full bg-indigo-500/20 backdrop-blur-sm px-6 py-2 text-sm font-medium text-indigo-300 ring-1 ring-inset ring-indigo-400/30">
                 <SparklesIcon className="mr-2 h-4 w-4" />
                 AI-Powered AV Search Platform
               </div>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-7xl mb-6">
+            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl mb-6">
               Find Any{' '}
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Driving Scenario
               </span>{' '}
               in Seconds
             </h1>
 
             {/* Subheading */}
-            <p className="text-xl leading-8 text-gray-600 dark:text-gray-300 mb-8 max-w-xl">
+            <p className="text-xl leading-8 text-gray-100 mb-8 max-w-xl">
               Transform hours of manual video review into instant discoveries. 
               Our AI searches through terabytes of autonomous vehicle data to find exactly what you need.
             </p>
@@ -59,16 +171,16 @@ export default function HeroSection() {
             {/* Key Features */}
             <div className="flex gap-8 mb-8">
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">512D</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Vector Search</div>
+                <div className="text-2xl font-bold text-white">512D</div>
+                <div className="text-sm text-gray-200">Vector Search</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">1/sec</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Frame Rate</div>
+                <div className="text-2xl font-bold text-white">1/sec</div>
+                <div className="text-sm text-gray-200">Frame Rate</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">100TB</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Scale Support</div>
+                <div className="text-2xl font-bold text-white">100TB</div>
+                <div className="text-sm text-gray-200">Scale Support</div>
               </div>
             </div>
 
@@ -91,9 +203,9 @@ export default function HeroSection() {
             </div>
 
             {/* Technology Stack */}
-            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Built with enterprise-grade technology</p>
-              <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-8 pt-8 border-t border-gray-300">
+              <p className="text-sm text-gray-200 mb-4">Built with enterprise-grade technology</p>
+              <div className="flex items-center gap-6 text-sm text-gray-200">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-green-500"></div>
                   OpenAI CLIP
@@ -108,6 +220,42 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
+
+            {/* Scroll indicator - show phase status */}
+            {scrollPhase === 'loading' && (
+              <div className="mt-6 flex items-center gap-2 text-sm text-gray-200">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"
+                      style={{ animationDelay: `${i * 0.2}s` }}
+                    />
+                  ))}
+                </div>
+                <span className="animate-pulse">Loading 3D experience...</span>
+              </div>
+            )}
+            
+            {scrollPhase === 'spline-interaction' && (
+              <div className="mt-6 flex items-center gap-2 text-sm text-gray-200 animate-pulse">
+                <div className="flex flex-col gap-1">
+                  <div className="w-1 h-2 bg-indigo-400 rounded animate-bounce"></div>
+                  <div className="w-1 h-2 bg-indigo-400 rounded animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1 h-2 bg-indigo-400 rounded animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span>Scroll to interact with the 3D scene</span>
+              </div>
+            )}
+            
+            {scrollPhase === 'normal' && (
+              <div className="mt-6 flex items-center gap-2 text-sm text-gray-200">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                </div>
+                <span>Scroll to continue down the page</span>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Visual */}

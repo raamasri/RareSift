@@ -4,14 +4,78 @@ import { useEffect, useState } from 'react'
 
 export default function AnimatedBackground() {
   const [mounted, setMounted] = useState(false)
+  const [splineLoaded, setSplineLoaded] = useState(false)
+  const [useSpline, setUseSpline] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    
+    // Check if device can handle Spline (disable on mobile for performance)
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        setUseSpline(false)
+      } else {
+        // Load Spline viewer script and create viewer
+        loadSplineViewer()
+      }
+    }
   }, [])
+
+  const loadSplineViewer = async () => {
+    try {
+      // Load Spline viewer script
+      const script = document.createElement('script')
+      script.type = 'module'
+      script.src = 'https://unpkg.com/@splinetool/viewer@1.10.38/build/spline-viewer.js'
+      document.head.appendChild(script)
+      
+      script.onload = () => {
+        // Create spline-viewer element
+        const splineViewer = document.createElement('spline-viewer')
+        splineViewer.setAttribute('url', 'https://prod.spline.design/LV81zVt0n3R5ztaC/scene.splinecode')
+        splineViewer.style.cssText = `
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0.9;
+          pointer-events: auto;
+          z-index: -1;
+        `
+        
+        splineViewer.addEventListener('load', () => {
+          console.log('Spline viewer loaded successfully')
+          setSplineLoaded(true)
+        })
+        
+        splineViewer.addEventListener('error', () => {
+          console.warn('Spline viewer failed to load, using fallback background')
+          setUseSpline(false)
+        })
+        
+        const backgroundElement = document.querySelector('.spline-background-container')
+        if (backgroundElement) {
+          backgroundElement.appendChild(splineViewer)
+        }
+      }
+      
+      script.onerror = () => {
+        console.warn('Spline viewer script failed to load, using fallback background')
+        setUseSpline(false)
+      }
+      
+    } catch (error) {
+      console.warn('Spline failed to load, using fallback background:', error)
+      setUseSpline(false)
+    }
+  }
 
   if (!mounted) return null
 
-  return (
+  // Fallback animated background for mobile or when Spline fails
+  const FallbackBackground = () => (
     <div className="absolute inset-0 -z-20 overflow-hidden">
       {/* Animated particles */}
       <div className="absolute inset-0">
@@ -57,6 +121,18 @@ export default function AnimatedBackground() {
           }
         }
       `}</style>
+    </div>
+  )
+
+  return (
+    <div className="spline-background-container absolute inset-0 -z-20 overflow-hidden">
+      {!useSpline || !splineLoaded ? <FallbackBackground /> : null}
+      
+      {/* Minimal overlay - just a subtle gradient to help with text contrast */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Very subtle left-side gradient for text area only */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+      </div>
     </div>
   )
 }

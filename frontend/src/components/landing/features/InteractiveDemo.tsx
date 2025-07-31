@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { APISearchInterface } from '@/components/search/api-search-interface'
-import { CheckCircleIcon, PlayIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, PlayIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+// Temporarily comment out VideoPlayer import to debug
+// import VideoPlayer from '@/components/video/video-player'
 
 interface SearchResult {
   frame_id: number
@@ -29,6 +31,8 @@ interface SearchResponse {
 export default function InteractiveDemo() {
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null)
   const [showResults, setShowResults] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<SearchResult | null>(null)
+  const [showVideoModal, setShowVideoModal] = useState(false)
 
   const handleSearchResults = (results: SearchResponse) => {
     setSearchResults(results)
@@ -38,6 +42,16 @@ export default function InteractiveDemo() {
   const resetDemo = () => {
     setSearchResults(null)
     setShowResults(false)
+  }
+
+  const handleVideoClick = (result: SearchResult) => {
+    setSelectedVideo(result)
+    setShowVideoModal(true)
+  }
+
+  const closeVideoModal = () => {
+    setSelectedVideo(null)
+    setShowVideoModal(false)
   }
 
   return (
@@ -86,6 +100,7 @@ export default function InteractiveDemo() {
                   {searchResults.results.map((result, index) => (
                     <div
                       key={result.frame_id}
+                      onClick={() => handleVideoClick(result)}
                       className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200 cursor-pointer transform hover:scale-105"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
@@ -188,6 +203,101 @@ export default function InteractiveDemo() {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {showVideoModal && selectedVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {selectedVideo.video_filename}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Frame {selectedVideo.frame_id} • {Math.round((selectedVideo.similarity || 0) * 100)}% match
+                </p>
+              </div>
+              <button
+                onClick={closeVideoModal}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Video Player - temporarily commented out for debug */}
+            <div className="p-6">
+              <div className="aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                <div className="text-white text-center">
+                  <PlayIcon className="w-16 h-16 mx-auto mb-4" />
+                  <p>Video Player Temporarily Disabled</p>
+                  <p className="text-sm text-gray-400">Video ID: {selectedVideo.video_id}</p>
+                </div>
+              </div>
+
+              {/* Video Details */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Video Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Video ID:</span>
+                      <span className="text-gray-900 dark:text-white">{selectedVideo.video_id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Timestamp:</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {Math.floor(selectedVideo.timestamp / 60)}:{String(Math.floor(selectedVideo.timestamp % 60)).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Duration:</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {selectedVideo.video_duration ? `${Math.floor(selectedVideo.video_duration / 60)}:${String(selectedVideo.video_duration % 60).padStart(2, '0')}` : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Similarity:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">
+                        {Math.round((selectedVideo.similarity || 0) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Metadata</h4>
+                  <div className="space-y-2 text-sm">
+                    {Object.entries(selectedVideo.metadata).map(([key, value]) => (
+                      <div key={key} className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400 capitalize">{key.replace('_', ' ')}:</span>
+                        <span className="text-gray-900 dark:text-white">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex justify-center space-x-4">
+                <Link
+                  href="/app"
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  Try Full Demo
+                </Link>
+                <button
+                  onClick={closeVideoModal}
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
