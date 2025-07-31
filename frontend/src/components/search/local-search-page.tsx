@@ -217,12 +217,23 @@ export function LocalSearchPage() {
                     {/* Frame Image */}
                     <div className="relative">
                       <div className="aspect-video bg-slate-100 dark:bg-slate-700 relative">
-                        <Image
-                          src={result.frame_image}
-                          alt={`Frame from ${result.video_source}`}
-                          fill
-                          className="object-cover"
-                        />
+                        {result.frame_image ? (
+                          <Image
+                            src={result.frame_image}
+                            alt={`Frame from ${result.video_source}`}
+                            fill
+                            className="object-cover"
+                            onError={(e) => {
+                              console.error('Image failed to load:', result.frame_image);
+                              // Show placeholder on error
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-600">
+                            <FilmIcon className="h-12 w-12 text-slate-400" />
+                          </div>
+                        )}
                         
                         {/* Confidence Badge */}
                         <div className={clsx(

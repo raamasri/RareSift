@@ -479,11 +479,29 @@ class VideoProcessor:
             video.is_processed = True
             video.processing_completed_at = datetime.utcnow()
             
-            # Update video metadata with detected conditions from first frame
+            # Update video metadata with CLIP-detected conditions from first frame
             if frames_data:
-                first_frame_conditions = self.detect_conditions(frames_data[0]["frame_path"])
-                if "time_of_day" in first_frame_conditions:
-                    video.time_of_day = first_frame_conditions["time_of_day"]
+                try:
+                    # Use CLIP-powered condition detection
+                    from app.services.embedding_service import EmbeddingService
+                    embedding_service = EmbeddingService()
+                    await embedding_service.initialize()
+                    
+                    first_frame_conditions = await embedding_service.detect_conditions_clip(frames_data[0]["frame_path"])
+                    
+                    if "time_of_day" in first_frame_conditions:
+                        video.time_of_day = first_frame_conditions["time_of_day"]
+                    if "weather" in first_frame_conditions:
+                        video.weather = first_frame_conditions["weather"]
+                        
+                    print(f"CLIP detected conditions: time={first_frame_conditions.get('time_of_day')} weather={first_frame_conditions.get('weather')}")
+                        
+                except Exception as e:
+                    print(f"CLIP condition detection failed, using fallback: {str(e)}")
+                    # Fallback to basic detection
+                    first_frame_conditions = self.detect_conditions(frames_data[0]["frame_path"])
+                    if "time_of_day" in first_frame_conditions:
+                        video.time_of_day = first_frame_conditions["time_of_day"]
             
             db.commit()
             return True

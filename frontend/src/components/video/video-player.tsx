@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
+import { getSafeApiUrl } from '../../utils/security'
 
 interface VideoPlayerProps {
   videoId: number
@@ -57,7 +58,7 @@ export default function VideoPlayer({
 
   const videoFilename = getVideoFilename(videoId)
   // Use backend streaming endpoint for actual video playback
-  const videoSrc = `http://localhost:8000/api/v1/videos/${videoId}/stream`
+  const videoSrc = getSafeApiUrl(`/api/v1/videos/${videoId}/stream`)
 
   useEffect(() => {
     const video = videoRef.current

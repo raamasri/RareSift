@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import { getSafeApiUrl, getSafeImageUrl, sanitizeFileName, sanitizeInput } from '../../utils/security'
+import VideoPlayer from '@/components/video/video-player'
 import { 
   FilmIcon, 
   ClockIcon, 
@@ -11,66 +14,98 @@ import {
   VideoCameraIcon,
   MapPinIcon,
   CloudIcon,
-  SunIcon
+  SunIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 
-// Define local video assets structure
-interface LocalVideo {
-  id: string
-  filename: string
-  category: 'driving_camera' | 'static_camera'
-  weather: string
-  time_of_day: string
-  location: string
-  size: number
-  estimatedDuration: number
-  fps: number
+// Define video structure from API
+interface Video {
+  id: number
+  original_filename: string
+  duration: number
   width: number
   height: number
-  isProcessed: boolean
+  fps: number
+  file_size: number
+  time_of_day: string
+  weather: string
+  video_metadata: {
+    camera_type?: string
+    location?: string
+  }
+  is_processed: boolean
+  processing_started_at?: string
+  processing_completed_at?: string
 }
 
-// Mock local video data based on actual video assets - ALL 22 videos processed in v0.6.0 with 4,985 frames
-const LOCAL_VIDEOS: LocalVideo[] = [
-  // Driving Camera Footage (9 videos - all processed with frame extraction)
-  { id: '1', filename: 'GH010001.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 127458304, estimatedDuration: 120, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '2', filename: 'GH010002.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 134217728, estimatedDuration: 135, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '3', filename: 'GH010003.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 141234560, estimatedDuration: 140, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '4', filename: 'GH010004.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 156823040, estimatedDuration: 150, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '5', filename: 'GH010005.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 167772160, estimatedDuration: 165, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '6', filename: 'GH010006.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 178956352, estimatedDuration: 175, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '7', filename: 'GH010007.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 189234176, estimatedDuration: 180, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '8', filename: 'GH010010.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 198654976, estimatedDuration: 195, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '9', filename: 'GH020010.MP4', category: 'driving_camera', weather: 'sunny', time_of_day: 'day', location: 'Highway driving', size: 205623296, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  
-  // Static Camera Footage (13 videos - all processed with frame extraction)
-  { id: '10', filename: 'GH010031.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 156823040, estimatedDuration: 180, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '11', filename: 'GH010032.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 167772160, estimatedDuration: 190, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '12', filename: 'GH010033.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 178956352, estimatedDuration: 200, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '13', filename: 'GH010034.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 189234176, estimatedDuration: 210, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '14', filename: 'GH010035.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 198654976, estimatedDuration: 220, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '15', filename: 'GH010036.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 205623296, estimatedDuration: 230, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '16', filename: 'GH010037.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 212992512, estimatedDuration: 240, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '17', filename: 'GH010038.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 220361728, estimatedDuration: 250, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '18', filename: 'GH010039.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 227730944, estimatedDuration: 260, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '19', filename: 'GH010041.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 235100160, estimatedDuration: 270, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '20', filename: 'GH010042.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 242469376, estimatedDuration: 280, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '21', filename: 'GH010043.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 249838592, estimatedDuration: 290, fps: 30, width: 1920, height: 1080, isProcessed: true },
-  { id: '22', filename: 'GH010045.MP4', category: 'static_camera', weather: 'sunny', time_of_day: 'day', location: 'Intersection monitoring', size: 257207808, estimatedDuration: 300, fps: 30, width: 1920, height: 1080, isProcessed: true }
-]
-
 export function LocalVideoLibrary() {
-  const [selectedVideo, setSelectedVideo] = useState<LocalVideo | null>(null)
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [showProcessedOnly, setShowProcessedOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [playingVideoId, setPlayingVideoId] = useState<number | null>(null)
+  const [playingTimestamp, setPlayingTimestamp] = useState<number>(0)
+  const [videos, setVideos] = useState<Video[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch videos from API
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true)
+        // Import the API functions dynamically to avoid circular dependencies
+        const { videoApi } = await import('@/lib/api')
+        const data = await videoApi.list()
+        setVideos(data)
+        setError(null)
+      } catch (err) {
+        console.error('Failed to fetch videos:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load videos')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchVideos()
+  }, [])
+
+  // Helper function to determine category from filename and metadata
+  const getVideoCategory = (video: Video): 'driving_camera' | 'static_camera' => {
+    // Use camera_type from metadata if available
+    if (video.video_metadata?.camera_type) {
+      return video.video_metadata.camera_type as 'driving_camera' | 'static_camera'
+    }
+    
+    // Fallback: determine from filename patterns
+    const filename = video.original_filename.toLowerCase()
+    if (filename.includes('gh010001') || filename.includes('gh010002') || 
+        filename.includes('gh010003') || filename.includes('gh010004') ||
+        filename.includes('gh010005') || filename.includes('gh010006') ||
+        filename.includes('gh010007') || filename.includes('gh010010') ||
+        filename.includes('gh020010')) {
+      return 'driving_camera'
+    }
+    return 'static_camera'
+  }
+
+  // Helper function to get location from metadata or derive from filename
+  const getVideoLocation = (video: Video): string => {
+    if (video.video_metadata?.location) {
+      return video.video_metadata.location
+    }
+    
+    const category = getVideoCategory(video)
+    return category === 'driving_camera' ? 'Highway driving' : 'Intersection monitoring'
+  }
 
   // Filter videos based on current filters
-  const filteredVideos = LOCAL_VIDEOS.filter(video => {
-    if (filterCategory !== 'all' && video.category !== filterCategory) return false
-    if (showProcessedOnly && !video.isProcessed) return false
-    if (searchQuery && !video.filename.toLowerCase().includes(searchQuery.toLowerCase())) return false
+  const filteredVideos = videos.filter(video => {
+    const category = getVideoCategory(video)
+    if (filterCategory !== 'all' && category !== filterCategory) return false
+    if (showProcessedOnly && !video.is_processed) return false
+    if (searchQuery && !video.original_filename.toLowerCase().includes(searchQuery.toLowerCase())) return false
     return true
   })
 
@@ -88,8 +123,8 @@ export function LocalVideoLibrary() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
   }
 
-  const getProcessingStatus = (video: LocalVideo) => {
-    if (video.isProcessed) {
+  const getProcessingStatus = (video: Video) => {
+    if (video.is_processed) {
       return {
         status: 'completed',
         icon: CheckCircleIcon,
@@ -114,12 +149,100 @@ export function LocalVideoLibrary() {
     return category === 'driving_camera' ? 'Driving Camera' : 'Static Camera'
   }
 
+  const getVideoThumbnail = (video: Video) => {
+    // Map video filename to a representative frame
+    // Use a frame from the middle of each video for best representation
+    const frameMapping: { [key: string]: string } = {
+      'GH010001.MP4': 'driving_camera_gh010001_frame_060.jpg',
+      'GH010002.MP4': 'driving_camera_gh010002_frame_070.jpg', 
+      'GH010003.MP4': 'driving_camera_gh010003_frame_070.jpg',
+      'GH010004.MP4': 'driving_camera_gh010004_frame_075.jpg',
+      'GH010005.MP4': 'driving_camera_gh010005_frame_080.jpg',
+      'GH010006.MP4': 'driving_camera_gh010006_frame_085.jpg',
+      'GH010007.MP4': 'driving_camera_gh010007_frame_090.jpg',
+      'GH010010.MP4': 'driving_camera_gh010010_frame_095.jpg',
+      'GH020010.MP4': 'driving_camera_gh020010_frame_100.jpg',
+      'GH010031.MP4': 'static_camera_gh010031_frame_006.jpg',
+      'GH010032.MP4': 'static_camera_gh010032_frame_040.jpg',
+      'GH010033.MP4': 'static_camera_gh010033_frame_040.jpg',
+      'GH010034.MP4': 'static_camera_gh010034_frame_040.jpg',
+      'GH010035.MP4': 'static_camera_gh010035_frame_040.jpg',
+      'GH010036.MP4': 'static_camera_gh010036_frame_040.jpg',
+      'GH010037.MP4': 'static_camera_gh010037_frame_040.jpg',
+      'GH010038.MP4': 'static_camera_gh010038_frame_040.jpg',
+      'GH010039.MP4': 'static_camera_gh010039_frame_040.jpg',
+      'GH010041.MP4': 'static_camera_gh010041_frame_040.jpg',
+      'GH010042.MP4': 'static_camera_gh010042_frame_040.jpg',
+      'GH010043.MP4': 'static_camera_gh010043_frame_040.jpg',
+      'GH010045.MP4': 'static_camera_gh010045_frame_040.jpg'
+    }
+
+    const frameName = frameMapping[video.original_filename]
+    return frameName ? getSafeImageUrl(`/frames/${frameName}`) : null
+  }
+
+  const handlePlayVideo = (video: Video) => {
+    setPlayingVideoId(video.id)
+    setPlayingTimestamp(0) // Start from beginning
+  }
+
   const stats = {
-    total: LOCAL_VIDEOS.length,
-    processed: LOCAL_VIDEOS.filter(v => v.isProcessed).length,
-    driving: LOCAL_VIDEOS.filter(v => v.category === 'driving_camera').length,
-    static: LOCAL_VIDEOS.filter(v => v.category === 'static_camera').length,
-    totalSize: LOCAL_VIDEOS.reduce((acc, v) => acc + v.size, 0)
+    total: videos.length,
+    processed: videos.filter(v => v.is_processed).length,
+    driving: videos.filter(v => getVideoCategory(v) === 'driving_camera').length,
+    static: videos.filter(v => getVideoCategory(v) === 'static_camera').length,
+    totalSize: videos.reduce((acc, v) => acc + (v.file_size || 0), 0)
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+            <FilmIcon className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Local Video Library</h1>
+            <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">Loading videos...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden animate-pulse">
+              <div className="aspect-video bg-slate-200 dark:bg-slate-700" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <ExclamationTriangleIcon className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Video Library Error</h1>
+            <p className="text-lg text-red-600 dark:text-red-400 mt-2">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -215,90 +338,139 @@ export function LocalVideoLibrary() {
         {filteredVideos.map((video) => {
           const processingStatus = getProcessingStatus(video)
           const StatusIcon = processingStatus.icon
-          const CategoryIcon = getCategoryIcon(video.category)
+          const category = getVideoCategory(video)
+          const CategoryIcon = getCategoryIcon(category)
           
           return (
             <div
               key={video.id}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:shadow-md"
+              className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 hover:shadow-md"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                    <CategoryIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              {/* Video Thumbnail */}
+              <div className="relative aspect-video bg-slate-100 dark:bg-slate-700">
+                {getVideoThumbnail(video) ? (
+                  <img
+                    src={getVideoThumbnail(video)!}
+                    alt={`Thumbnail for ${video.original_filename}`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onLoad={() => {
+                      console.log('Thumbnail loaded:', getVideoThumbnail(video));
+                    }}
+                    onError={(e) => {
+                      console.error('Thumbnail failed to load:', getVideoThumbnail(video));
+                      console.error('Error event:', e);
+                      // Hide image on error, show fallback
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : null}
+                
+                {/* Overlay with video info */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                
+                {/* Status Badge - overlay on thumbnail */}
+                <div className="absolute top-3 right-3">
+                  <div className={clsx(
+                    'px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 backdrop-blur-sm',
+                    processingStatus.color.replace('bg-', 'bg-').replace('text-', 'text-')
+                  )}>
+                    <StatusIcon className="h-3 w-3" />
+                    <span>{processingStatus.text}</span>
                   </div>
+                </div>
+                
+                {/* Category badge - overlay on thumbnail */}
+                <div className="absolute top-3 left-3">
+                  <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center space-x-1">
+                    <CategoryIcon className="h-3 w-3 text-white" />
+                    <span className="text-xs text-white font-medium">{getCategoryLabel(category)}</span>
+                  </div>
+                </div>
+                
+                {/* Duration overlay */}
+                <div className="absolute bottom-3 right-3">
+                  <div className="bg-black/70 backdrop-blur-sm rounded px-2 py-1 flex items-center space-x-1">
+                    <ClockIcon className="h-3 w-3 text-white" />
+                    <span className="text-xs text-white font-medium">{formatDuration(video.duration || 0)}</span>
+                  </div>
+                </div>
+                
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handlePlayVideo(video)}
+                    className="bg-black/70 hover:bg-black/80 text-white rounded-full p-4 backdrop-blur-sm transform hover:scale-105 transition-all"
+                  >
+                    <PlayIcon className="h-8 w-8 ml-1" />
+                  </button>
+                </div>
+
+                {/* Fallback icon when no thumbnail */}
+                {!getVideoThumbnail(video) && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FilmIcon className="h-16 w-16 text-slate-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Video Info */}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {video.filename}
+                      {video.original_filename}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {getCategoryLabel(video.category)}
+                      Video ID: {video.id}
                     </p>
                   </div>
                 </div>
-                
-                {/* Status Badge */}
-                <div className={clsx(
-                  'px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1',
-                  processingStatus.color
-                )}>
-                  <StatusIcon className="h-3 w-3" />
-                  <span>{processingStatus.text}</span>
-                </div>
-              </div>
 
-              {/* Video Details */}
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-300">
-                    <ClockIcon className="h-3 w-3" />
-                    <span>{formatDuration(video.estimatedDuration)}</span>
+                {/* Video Details */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-600 dark:text-slate-300">
+                      {video.width}×{video.height} • {video.fps} fps
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatFileSize(video.file_size || 0)}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {video.width}×{video.height} • {video.fps} fps
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-600 dark:text-slate-300">
+                      {getVideoLocation(video)}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {video.weather} • {video.time_of_day}
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-xs text-slate-600 dark:text-slate-300">
-                    {formatFileSize(video.size)}
+
+                {/* Actions */}
+                <div className="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-600">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handlePlayVideo(video)}
+                      className="flex items-center space-x-2 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                    >
+                      <PlayIcon className="h-4 w-4" />
+                      <span>Play Video</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedVideo(video)}
+                      className="flex items-center space-x-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                      <span>Details</span>
+                    </button>
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Video ID: {video.id}
-                  </div>
+                  
+                  {video.is_processed && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                      ✓ Ready for search
+                    </span>
+                  )}
                 </div>
-              </div>
-
-              {/* Metadata Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-xs capitalize flex items-center space-x-1">
-                  <SunIcon className="h-3 w-3" />
-                  <span>{video.time_of_day}</span>
-                </span>
-                <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-xs capitalize flex items-center space-x-1">
-                  <CloudIcon className="h-3 w-3" />
-                  <span>{video.weather}</span>
-                </span>
-                <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-xs flex items-center space-x-1">
-                  <MapPinIcon className="h-3 w-3" />
-                  <span>{video.location}</span>
-                </span>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-600">
-                <button
-                  onClick={() => setSelectedVideo(video)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                >
-                  <EyeIcon className="h-4 w-4" />
-                  <span>View Details</span>
-                </button>
-                
-                {video.isProcessed && (
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                    ✓ Ready for search
-                  </span>
-                )}
               </div>
             </div>
           )
@@ -355,15 +527,15 @@ export function LocalVideoLibrary() {
                   <dl className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <dt className="text-slate-500 dark:text-slate-400">Filename</dt>
-                      <dd className="font-medium text-slate-900 dark:text-white">{selectedVideo.filename}</dd>
+                      <dd className="font-medium text-slate-900 dark:text-white">{selectedVideo.original_filename}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500 dark:text-slate-400">Category</dt>
-                      <dd className="font-medium text-slate-900 dark:text-white">{getCategoryLabel(selectedVideo.category)}</dd>
+                      <dd className="font-medium text-slate-900 dark:text-white">{getCategoryLabel(getVideoCategory(selectedVideo))}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500 dark:text-slate-400">Duration</dt>
-                      <dd className="font-medium text-slate-900 dark:text-white">{formatDuration(selectedVideo.estimatedDuration)}</dd>
+                      <dd className="font-medium text-slate-900 dark:text-white">{formatDuration(selectedVideo.duration || 0)}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500 dark:text-slate-400">Resolution</dt>
@@ -375,7 +547,7 @@ export function LocalVideoLibrary() {
                     </div>
                     <div>
                       <dt className="text-slate-500 dark:text-slate-400">File Size</dt>
-                      <dd className="font-medium text-slate-900 dark:text-white">{formatFileSize(selectedVideo.size)}</dd>
+                      <dd className="font-medium text-slate-900 dark:text-white">{formatFileSize(selectedVideo.file_size || 0)}</dd>
                     </div>
                   </dl>
                 </div>
@@ -394,7 +566,7 @@ export function LocalVideoLibrary() {
                     </div>
                     <div className="col-span-2">
                       <dt className="text-slate-500 dark:text-slate-400">Location</dt>
-                      <dd className="font-medium text-slate-900 dark:text-white">{selectedVideo.location}</dd>
+                      <dd className="font-medium text-slate-900 dark:text-white">{getVideoLocation(selectedVideo)}</dd>
                     </div>
                   </dl>
                 </div>
@@ -405,21 +577,21 @@ export function LocalVideoLibrary() {
                   <div className="flex items-center space-x-3">
                     <div className={clsx(
                       'px-3 py-2 rounded-lg flex items-center space-x-2',
-                      selectedVideo.isProcessed 
+                      selectedVideo.is_processed 
                         ? 'bg-emerald-50 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
                         : 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
                     )}>
-                      {selectedVideo.isProcessed ? (
+                      {selectedVideo.is_processed ? (
                         <CheckCircleIcon className="h-4 w-4" />
                       ) : (
                         <Cog6ToothIcon className="h-4 w-4 animate-spin" />
                       )}
                       <span className="font-medium">
-                        {selectedVideo.isProcessed ? 'Ready for search' : 'Processing frames and embeddings...'}
+                        {selectedVideo.is_processed ? 'Ready for search' : 'Processing frames and embeddings...'}
                       </span>
                     </div>
                   </div>
-                  {selectedVideo.isProcessed && (
+                  {selectedVideo.is_processed && (
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
                       ✓ Frames extracted • ✓ CLIP embeddings generated • ✓ Search index ready
                     </p>
@@ -435,6 +607,32 @@ export function LocalVideoLibrary() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Player */}
+      {playingVideoId && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                  Video Player - {videos.find(v => v.id === playingVideoId)?.original_filename}
+                </h3>
+                <button
+                  onClick={() => setPlayingVideoId(null)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <VideoPlayer 
+                videoId={playingVideoId} 
+                timestamp={playingTimestamp}
+              />
             </div>
           </div>
         </div>

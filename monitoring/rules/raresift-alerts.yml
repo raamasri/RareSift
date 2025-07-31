@@ -1,0 +1,152 @@
+groups:
+  - name: raresift-alerts
+    rules:
+      # High-level service health
+      - alert: RareSiftServiceDown
+        expr: up{job="raresift-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RareSift backend service is down"
+          description: "RareSift backend has been down for more than 1 minute"
+
+      # HTTP error rates
+      - alert: HighHTTPErrorRate
+        expr: |
+          (
+            sum(rate(raresift_http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(raresift_http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "HTTP error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # Response time alerts
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, rate(raresift_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s over the last 5 minutes"
+
+      # Memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (raresift_memory_usage_bytes / (1024*1024*1024)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanize }}GB"
+
+      # CPU usage
+      - alert: HighCPUUsage
+        expr: raresift_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+
+      # Disk space
+      - alert: LowDiskSpace
+        expr: |
+          (
+            (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"})
+            / node_filesystem_size_bytes{mountpoint="/"}
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value | humanizePercentage }} on root filesystem"
+
+      # Database connectivity
+      - alert: DatabaseConnectionFailed
+        expr: raresift_health_database_status == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failed"
+          description: "Cannot connect to PostgreSQL database"
+
+      # Redis connectivity
+      - alert: RedisConnectionFailed
+        expr: raresift_health_redis_status == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis connection failed"
+          description: "Cannot connect to Redis cache"
+
+      # AI Model health
+      - alert: AIModelFailure
+        expr: raresift_health_ai_model_status == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI model is not responding"
+          description: "CLIP model health check is failing"
+
+      # Video processing failures
+      - alert: HighVideoProcessingFailures
+        expr: |
+          (
+            sum(rate(raresift_video_uploads_total{status="failed"}[10m]))
+            /
+            sum(rate(raresift_video_uploads_total[10m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High video processing failure rate"
+          description: "Video processing failure rate is {{ $value | humanizePercentage }}"
+
+      # Search request failures
+      - alert: HighSearchFailures
+        expr: |
+          sum(rate(raresift_http_requests_total{endpoint=~"/api/v1/search.*", status_code=~"5.."}[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Search requests are failing"
+          description: "Search endpoint error rate: {{ $value }} errors/sec"
+
+  - name: raresift-business-metrics
+    rules:
+      # Daily active users (if user tracking is implemented)
+      - record: raresift:daily_active_users
+        expr: |
+          count(
+            count by (user_id) (
+              rate(raresift_http_requests_total{user_id!=""}[24h])
+            )
+          )
+
+      # Video processing throughput
+      - record: raresift:video_processing_rate
+        expr: rate(raresift_video_uploads_total{status="success"}[5m])
+
+      # Search request rate
+      - record: raresift:search_rate
+        expr: rate(raresift_search_requests_total[5m])
+
+      # Average video processing time
+      - record: raresift:avg_video_processing_time
+        expr: rate(raresift_video_processing_seconds_sum[5m]) / rate(raresift_video_processing_seconds_count[5m])

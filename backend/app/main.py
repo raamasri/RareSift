@@ -1,5 +1,9 @@
 import os
 from fastapi import FastAPI, HTTPException, Request
+
+# Configuration for Render deployment
+PORT = int(os.environ.get("PORT", 8000))
+HOST = os.environ.get("HOST", "0.0.0.0")
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
@@ -13,32 +17,34 @@ from fastapi import APIRouter
 api_router = APIRouter()
 
 # Import and include individual routers
-from app.api.v1 import videos, search, export, auth, contact
+from app.api.v1 import videos, search, export, auth, contact, monitoring
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(videos.router, prefix="/videos", tags=["videos"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])  
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(contact.router, prefix="/contact", tags=["contact"])
-from app.core.config import settings
+api_router.include_router(monitoring.router, prefix="/monitoring", tags=["monitoring"])
+from app.core.config_secure import get_settings
+settings = get_settings()
+from app.core.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure production logging
+from app.core.logging_config import setup_logging, log_application_startup, log_application_shutdown
+from app.core.monitoring import MetricsMiddleware
+
+# Setup structured logging
+setup_logging(
+    log_level=settings.log_level,
+    log_format=settings.log_format,
+    log_dir="/app/logs" if settings.environment == "production" else "./logs"
+)
+
 logger = logging.getLogger(__name__)
 
-# Security headers middleware
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        
-        # Add security headers
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        
-        if settings.environment == "production":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        
-        return response
+# Log application startup
+log_application_startup()
+
+# Security middleware imported from middleware module
 
 app = FastAPI(
     title="RareSift API",
@@ -48,11 +54,9 @@ app = FastAPI(
 )
 
 # CORS middleware - configure for production
-allowed_origins = [
+allowed_origins = settings.cors_origins or [
     "http://localhost:3000",  # Development frontend
     "http://127.0.0.1:3000",
-    "https://raresift.com",   # Production domain
-    "https://www.raresift.com"
 ]
 
 app.add_middleware(
@@ -63,7 +67,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add security headers middleware
+# Add monitoring middleware (always enabled)
+app.add_middleware(MetricsMiddleware)
+
+# Add security middleware stack
+if settings.environment == "production":
+    app.add_middleware(RequestLoggingMiddleware)
+    
+if settings.rate_limit_enabled:
+    app.add_middleware(RateLimitMiddleware)
+
+# Add security headers middleware (always enabled)
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Create uploads directory structure (skip if directory creation fails)
@@ -102,16 +116,25 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    """
+    Basic health check - use /api/v1/monitoring/health for comprehensive checks
+    """
     try:
-        # Basic health check without heavy database operations
         return {
             "status": "healthy",
             "api": "operational",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "note": "Use /api/v1/monitoring/health for detailed health checks"
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.error(f"Basic health check failed: {e}")
         return {
             "status": "unhealthy",
             "error": str(e)
-        } 
+        }
+
+# Application lifecycle events
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Log application shutdown"""
+    log_application_shutdown() 

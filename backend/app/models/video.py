@@ -32,12 +32,16 @@ class Video(Base):
     processing_completed_at = Column(DateTime, nullable=True)
     processing_error = Column(Text, nullable=True)
     
+    # User association for multi-tenancy
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
     # Timestamps
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # Relationships
     frames = relationship("Frame", back_populates="video", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="videos")
 
 
 class Frame(Base):

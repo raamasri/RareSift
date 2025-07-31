@@ -1,44 +1,71 @@
 services:
   # Backend Service (FastAPI)
   - type: web
-    name: RareSift-backend
-    env: docker
-    dockerfilePath: ./Dockerfile
+    name: raresift-backend
+    env: python
     region: oregon
-    plan: free
+    plan: standard
     branch: main
     healthCheckPath: /health
+    buildCommand: |
+      cd backend &&
+      pip install --upgrade pip &&
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend &&
+      python -m alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: raresift-postgres
+          property: connectionString
       - key: REDIS_URL
-        sync: false
+        fromService:
+          type: redis
+          name: raresift-redis
+          property: connectionString
       - key: SECRET_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-
-  # Frontend Service (Next.js)
-  - type: web
-    name: RareSift-frontend
-    env: docker
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
-    region: oregon
-    plan: free
-    branch: main
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        value: https://raresift-backend.onrender.com
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://raresift.vercel.app,https://www.raresift.com
+      - key: API_V1_STR
+        value: /api/v1
+      - key: PROJECT_NAME
+        value: RareSift
+      - key: MAX_UPLOAD_SIZE
+        value: 500000000
+      - key: UPLOAD_DIR
+        value: /tmp/uploads
+      - key: CLIP_MODEL_NAME
+        value: ViT-B/32
+      - key: EMBEDDING_DIM
+        value: 512
+      - key: BATCH_SIZE
+        value: 10
+      - key: MAX_WORKERS
+        value: 4
+      - key: CACHE_TTL
+        value: 3600
+      - key: HOST
+        value: 0.0.0.0
 
 databases:
   - name: raresift-postgres
     databaseName: raresift
-    user: postgres
+    user: raresift_user
     region: oregon
-    plan: free
+    plan: standard
     
   - name: raresift-redis
     type: redis
     region: oregon
-    plan: free
+    plan: standard

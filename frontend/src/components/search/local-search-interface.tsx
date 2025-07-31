@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { MagnifyingGlassIcon, PhotoIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
+import { sanitizeInput, sanitizeSearchQuery, getSafeApiUrl, getSafeImageUrl, sanitizeFileName } from '../../utils/security'
 
 // Import comprehensive sample of extracted frames
 import { SAMPLE_SEARCH_DATABASE } from '../../frontend_sample_imports'
@@ -46,7 +47,7 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
   const [suggestedQueries, setSuggestedQueries] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState<SearchFilters>({
-    similarity_threshold: 0.2,
+    similarity_threshold: 0.1,
     limit: 10
   })
 
@@ -240,14 +241,20 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
     setIsLoading(true)
     
     try {
-      // Call real CLIP-powered search API
-      const response = await fetch('http://localhost:8000/api/v1/search/text', {
+      // Call real CLIP-powered search API with safe URL
+      const sanitizedQuery = sanitizeSearchQuery(query)
+      if (!sanitizedQuery) {
+        setIsLoading(false)
+        return
+      }
+      
+      const response = await fetch(getSafeApiUrl('/api/v1/search/text'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: query.trim(),
+          query: sanitizedQuery,
           limit: filters.limit,
           similarity_threshold: filters.similarity_threshold,
           filters: {
@@ -266,14 +273,14 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
       // Transform API results to match frontend format
       const transformedResults = data.results.map((result: any) => ({
         id: result.frame_id.toString(),
-        frame_image: `http://localhost:8000${result.frame_url}`,
+        frame_image: getSafeImageUrl(result.frame_url),
         confidence: Math.round(result.similarity * 100),
-        video_source: result.video_filename,
+        video_source: sanitizeFileName(result.video_filename),
         timestamp: result.timestamp,
         metadata: {
-          weather: 'sunny', // Default since API doesn't return this yet
-          time_of_day: 'day', // Default since API doesn't return this yet
-          location: 'Highway driving', // Default since API doesn't return this yet
+          weather: sanitizeInput(result.metadata?.weather) || 'unknown',
+          time_of_day: sanitizeInput(result.metadata?.time_of_day) || 'unknown',
+          location: sanitizeInput(result.metadata?.location) || 'unknown',
           category: result.video_filename.includes('GH010001') || result.video_filename.includes('GH010002') || 
                    result.video_filename.includes('GH010003') || result.video_filename.includes('GH010004') ||
                    result.video_filename.includes('GH010005') || result.video_filename.includes('GH010006') ||
@@ -291,14 +298,26 @@ export function LocalSearchInterface({ onSearchResults }: LocalSearchInterfacePr
       onSearchResults?.(searchResults)
     } catch (error) {
       console.error('Search failed:', error)
-      // Fallback to demo search on error
-      const results = simulateSearch(query.trim())
-      const searchResults = {
-        results,
-        total_found: results.length,
-        search_time_ms: Math.round(50 + Math.random() * 150)
+      
+      // Only fallback to demo in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Using demo search fallback in development mode')
+        const results = simulateSearch(query.trim())
+        const searchResults = {
+          results,
+          total_found: results.length,
+          search_time_ms: Math.round(50 + Math.random() * 150)
+        }
+        onSearchResults?.(searchResults)
+      } else {
+        // In production, show proper error
+        onSearchResults?.({
+          results: [],
+          total_found: 0,
+          search_time_ms: 0
+        })
+        // Could also show user-facing error notification here
       }
-      onSearchResults?.(searchResults)
     }
     
     setIsLoading(false)

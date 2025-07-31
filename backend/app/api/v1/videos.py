@@ -8,10 +8,13 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 import time
 import re
+import hashlib
 
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate, rate_limit_generous
+from app.core.security import file_validator, sanitize_path, secure_delete_file, secure_delete_directory_contents
+from app.core.validation import input_sanitizer, ValidatedVideoMetadata
 from app.models.video import Video
 from app.models.user import User
 from app.services.video_processor import VideoProcessor
@@ -94,25 +97,29 @@ async def upload_video(
     """
     Upload a video file with metadata
     """
-    # Validate file type
-    if not file.content_type.startswith("video/"):
-        raise HTTPException(status_code=400, detail="File must be a video")
-    
-    # Check file size
-    file_size = 0
+    # Read file content for validation
     content = await file.read()
     file_size = len(content)
     
-    if file_size > settings.max_file_size:
-        raise HTTPException(status_code=400, detail="File too large")
+    # Comprehensive file validation
+    file_info = file_validator.validate_upload_file(file, current_user.id, 'video')
+    file_validator.validate_file_size(file_size, 'video')
+    file_type_info = file_validator.validate_file_type(content, 'video')
+    
+    # Validate and sanitize metadata
+    validated_metadata = ValidatedVideoMetadata(
+        weather=weather,
+        time_of_day=time_of_day,
+        location=location,
+        speed_avg=speed_avg
+    )
     
     try:
-        # Generate unique filename
-        print(f"DEBUG: Starting upload process for {file.filename}")
-        file_extension = os.path.splitext(file.filename)[1]
-        filename = f"{int(time.time())}_{file.filename}"
-        file_path = os.path.join(settings.upload_dir, filename)
-        print(f"DEBUG: Generated file path: {file_path}")
+        # Generate secure filename
+        print(f"DEBUG: Starting upload process for {file_info['original_filename']}")
+        secure_filename = file_info['secure_filename']
+        file_path = sanitize_path(secure_filename, settings.upload_dir)
+        print(f"DEBUG: Generated secure file path: {file_path}")
         
         # Save file
         with open(file_path, "wb") as buffer:
@@ -127,19 +134,25 @@ async def upload_video(
         # Create video record
         print(f"DEBUG: Creating video record...")
         video = Video(
-            filename=filename,
-            original_filename=file.filename,
+            filename=secure_filename,
+            original_filename=file_info['original_filename'],
             file_path=file_path,
             file_size=file_size,
             duration=metadata["duration"],
             fps=metadata["fps"],
             width=metadata["width"],
             height=metadata["height"],
-            weather=weather,
-            time_of_day=time_of_day,
-            location=location,
-            speed_avg=speed_avg,
-            video_metadata=metadata
+            weather=validated_metadata.weather,
+            time_of_day=validated_metadata.time_of_day,
+            location=validated_metadata.location,
+            speed_avg=validated_metadata.speed_avg,
+            video_metadata={
+                **metadata,
+                "file_hash": hashlib.sha256(content).hexdigest(),
+                "mime_type": file_type_info['mime_type'],
+                "upload_timestamp": datetime.utcnow().isoformat()
+            },
+            user_id=current_user.id  # Associate with current user
         )
         print(f"DEBUG: Video object created")
         
@@ -166,8 +179,8 @@ async def upload_video(
         
     except Exception as e:
         # Clean up file if database operation failed
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if 'file_path' in locals():
+            secure_delete_file(file_path, settings.upload_dir)
         raise HTTPException(status_code=500, detail=f"Failed to upload video: {str(e)}")
 
 @router.get("/", response_model=VideoListResponse)
@@ -180,9 +193,9 @@ async def list_videos(
     _: None = Depends(rate_limit_generous)
 ):
     """
-    List all videos with pagination
+    List all videos with pagination (filtered by current user)
     """
-    query = db.query(Video)
+    query = db.query(Video).filter(Video.user_id == current_user.id)
     
     if processed_only:
         query = query.filter(Video.is_processed == True)
@@ -203,9 +216,12 @@ async def get_video(
     _: None = Depends(rate_limit_generous)
 ):
     """
-    Get a specific video by ID
+    Get a specific video by ID (filtered by current user)
     """
-    video = db.query(Video).filter(Video.id == video_id).first()
+    video = db.query(Video).filter(
+        Video.id == video_id,
+        Video.user_id == current_user.id
+    ).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
@@ -219,24 +235,24 @@ async def delete_video(
     _: None = Depends(rate_limit_moderate)
 ):
     """
-    Delete a video and its associated data
+    Delete a video and its associated data (filtered by current user)
     """
-    video = db.query(Video).filter(Video.id == video_id).first()
+    video = db.query(Video).filter(
+        Video.id == video_id,
+        Video.user_id == current_user.id
+    ).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
     try:
-        # Delete file from disk
-        if os.path.exists(video.file_path):
-            os.remove(video.file_path)
+        # Securely delete file from disk
+        secure_delete_file(video.file_path, settings.upload_dir)
         
-        # Delete frame files
+        # Securely delete frame files
         frames_dir = os.path.join(settings.upload_dir, "frames")
-        for frame_file in os.listdir(frames_dir):
-            if frame_file.startswith(f"video_{video_id}_"):
-                frame_path = os.path.join(frames_dir, frame_file)
-                if os.path.exists(frame_path):
-                    os.remove(frame_path)
+        pattern = f"video_{video_id}_.*"
+        deleted_frames = secure_delete_directory_contents(frames_dir, pattern, settings.upload_dir)
+        print(f"DEBUG: Deleted {deleted_frames} frame files for video {video_id}")
         
         # Delete from database (cascades to frames and embeddings)
         db.delete(video)
@@ -257,7 +273,10 @@ async def get_processing_status(
     """
     Get processing status of a video
     """
-    video = db.query(Video).filter(Video.id == video_id).first()
+    video = db.query(Video).filter(
+        Video.id == video_id,
+        Video.user_id == current_user.id  # CRITICAL: Only allow access to user's own videos
+    ).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
@@ -370,18 +389,27 @@ def range_requests_response(
 @router.get("/{video_id}/stream")
 async def stream_video(
     video_id: int,
-    request: Request
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
-    Stream video file with range request support for seeking
+    Stream video file with range request support for seeking (filtered by current user)
     """
     try:
-        video_path = get_video_path_by_id(video_id)
+        # Get video from database with user filtering
+        video = db.query(Video).filter(
+            Video.id == video_id,
+            Video.user_id == current_user.id
+        ).first()
         
-        if not os.path.exists(video_path):
+        if not video:
+            raise HTTPException(status_code=404, detail="Video not found")
+        
+        if not os.path.exists(video.file_path):
             raise HTTPException(status_code=404, detail="Video file not found")
         
-        return range_requests_response(request, video_path)
+        return range_requests_response(request, video.file_path)
         
     except HTTPException:
         raise

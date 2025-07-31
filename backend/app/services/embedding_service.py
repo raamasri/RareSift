@@ -220,6 +220,7 @@ class EmbeddingService:
         self, 
         db: Session, 
         query_embedding: np.ndarray, 
+        user_id: int,
         limit: int = 10,
         similarity_threshold: float = 0.5,
         filters: Optional[dict] = None
@@ -234,7 +235,7 @@ class EmbeddingService:
             query_vector = query_embedding.tolist()
             
             # Build pgvector similarity query with filters
-            filter_conditions = []
+            filter_conditions = [f"v.user_id = {user_id}"]  # Always filter by user
             
             if filters:
                 if filters.get("time_of_day"):
@@ -320,6 +321,7 @@ class EmbeddingService:
         self,
         db: Session,
         query_text: str,
+        user_id: int,
         limit: int = 10,
         similarity_threshold: float = 0.5,
         filters: Optional[dict] = None
@@ -333,7 +335,7 @@ class EmbeddingService:
             
             # Search similar frames
             search_results = await self.search_similar_frames(
-                db, query_embedding, limit, similarity_threshold, filters
+                db, query_embedding, user_id, limit, similarity_threshold, filters
             )
             
             # Save search record
@@ -362,6 +364,7 @@ class EmbeddingService:
         self,
         db: Session,
         image_path: str,
+        user_id: int,
         limit: int = 10,
         similarity_threshold: float = 0.5,
         filters: Optional[dict] = None
@@ -375,7 +378,7 @@ class EmbeddingService:
             
             # Search similar frames
             search_results = await self.search_similar_frames(
-                db, query_embedding, limit, similarity_threshold, filters
+                db, query_embedding, user_id, limit, similarity_threshold, filters
             )
             
             # Save search record
@@ -398,4 +401,123 @@ class EmbeddingService:
             }
             
         except Exception as e:
-            raise Exception(f"Failed to search by image: {str(e)}") 
+            raise Exception(f"Failed to search by image: {str(e)}")
+    
+    async def detect_conditions_clip(self, image_path: str) -> dict:
+        """
+        Use CLIP to detect time of day and weather conditions from video frames
+        """
+        if not self.is_initialized:
+            await self.initialize()
+            
+        try:
+            # Time of day prompts
+            time_prompts = [
+                "a bright sunny day with clear visibility",
+                "a dark nighttime scene with street lights and artificial lighting", 
+                "dawn or dusk with low lighting and twilight conditions",
+                "daytime with overcast sky and natural lighting"
+            ]
+            
+            # Weather condition prompts  
+            weather_prompts = [
+                "clear sunny weather with good visibility",
+                "rainy wet conditions with water on roads",
+                "cloudy overcast weather with gray sky",
+                "foggy conditions with poor visibility",
+                "snowy winter conditions with snow"
+            ]
+            
+            # Generate image embedding
+            image_embedding = await self.encode_image(image_path)
+            
+            # Generate text embeddings for all prompts
+            loop = asyncio.get_event_loop()
+            
+            def _encode_prompts():
+                time_embeddings = []
+                weather_embeddings = []
+                
+                for prompt in time_prompts:
+                    text_input = clip.tokenize([prompt]).to(self.device)
+                    with torch.no_grad():
+                        text_features = self.model.encode_text(text_input)
+                        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                        time_embeddings.append(text_features.cpu().numpy().flatten())
+                
+                for prompt in weather_prompts:
+                    text_input = clip.tokenize([prompt]).to(self.device)
+                    with torch.no_grad():
+                        text_features = self.model.encode_text(text_input)
+                        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                        weather_embeddings.append(text_features.cpu().numpy().flatten())
+                
+                return time_embeddings, weather_embeddings
+            
+            time_embeddings, weather_embeddings = await loop.run_in_executor(None, _encode_prompts)
+            
+            # Calculate similarities
+            time_similarities = []
+            for time_emb in time_embeddings:
+                similarity = np.dot(image_embedding, time_emb)
+                time_similarities.append(float(similarity))
+            
+            weather_similarities = []
+            for weather_emb in weather_embeddings:
+                similarity = np.dot(image_embedding, weather_emb)
+                weather_similarities.append(float(similarity))
+            
+            # Determine best matches
+            time_labels = ["day", "night", "dusk", "day"]  # Map to our schema values
+            weather_labels = ["sunny", "rainy", "cloudy", "foggy", "snowy"]
+            
+            best_time_idx = np.argmax(time_similarities)
+            best_weather_idx = np.argmax(weather_similarities)
+            
+            detected_time = time_labels[best_time_idx]
+            detected_weather = weather_labels[best_weather_idx]
+            
+            # Confidence scores
+            time_confidence = time_similarities[best_time_idx]
+            weather_confidence = weather_similarities[best_weather_idx]
+            
+            return {
+                "time_of_day": detected_time,
+                "weather": detected_weather,
+                "time_confidence": time_confidence,
+                "weather_confidence": weather_confidence,
+                "time_similarities": dict(zip(time_labels, time_similarities)),
+                "weather_similarities": dict(zip(weather_labels, weather_similarities))
+            }
+            
+        except Exception as e:
+            print(f"CLIP condition detection failed: {str(e)}")
+            # Fallback to basic detection
+            return await self._fallback_condition_detection(image_path)
+    
+    async def _fallback_condition_detection(self, image_path: str) -> dict:
+        """Fallback to basic brightness-based detection"""
+        try:
+            import cv2
+            image = cv2.imread(image_path)
+            if image is None:
+                return {"time_of_day": "day", "weather": "sunny"}
+            
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            avg_brightness = np.mean(gray)
+            
+            if avg_brightness < 50:
+                time_of_day = "night"
+            elif avg_brightness < 120:
+                time_of_day = "dusk"  
+            else:
+                time_of_day = "day"
+                
+            return {
+                "time_of_day": time_of_day,
+                "weather": "sunny",  # Default
+                "time_confidence": 0.5,
+                "weather_confidence": 0.5
+            }
+        except Exception:
+            return {"time_of_day": "day", "weather": "sunny"}

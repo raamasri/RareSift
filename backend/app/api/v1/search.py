@@ -13,6 +13,8 @@ from pathlib import Path
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate, rate_limit_generous
+from app.core.security import file_validator, secure_delete_file
+from app.core.validation import input_sanitizer, ValidatedSearchRequest
 from app.services.embedding_service import EmbeddingService
 from app.models.video import Video, Frame
 from app.models.user import User
@@ -47,10 +49,7 @@ class SearchResponse(BaseModel):
     query_text: Optional[str] = None
     filters: Dict[str, Any]
 
-class TextSearchRequest(BaseModel):
-    query: str
-    limit: int = 10
-    similarity_threshold: float = 0.5
+class TextSearchRequest(ValidatedSearchRequest):
     filters: Optional[SearchFilters] = None
 
 # Initialize embedding service
@@ -59,6 +58,7 @@ embedding_service = EmbeddingService()
 @router.post("/text", response_model=SearchResponse)
 async def search_by_text(
     request: TextSearchRequest,
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -74,6 +74,7 @@ async def search_by_text(
         search_results = await embedding_service.search_by_text(
             db=db,
             query_text=request.query,
+            user_id=current_user.id,
             limit=request.limit,
             similarity_threshold=request.similarity_threshold,
             filters=filters_dict
@@ -148,14 +149,15 @@ async def search_by_image(
     """
     Search for similar video frames using an example image
     """
-    # Validate file type
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    
     try:
-        # Save uploaded image temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
-            content = await file.read()
+        # Read and validate image file
+        content = await file.read()
+        file_info = file_validator.validate_upload_file(file, current_user.id, 'image')
+        file_validator.validate_file_size(len(content), 'image')
+        file_type_info = file_validator.validate_file_type(content, 'image')
+        
+        # Save uploaded image temporarily with secure filename
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_info['file_extension']) as temp_file:
             temp_file.write(content)
             temp_image_path = temp_file.name
         
@@ -174,6 +176,7 @@ async def search_by_image(
         search_results = await embedding_service.search_by_image(
             db=db,
             image_path=temp_image_path,
+            user_id=current_user.id,
             limit=limit,
             similarity_threshold=similarity_threshold,
             filters=filters_dict
@@ -188,7 +191,7 @@ async def search_by_image(
                 result["frame_url"] = f"/static/{relative_path}"
         
         # Clean up temporary file
-        os.unlink(temp_image_path)
+        secure_delete_file(temp_image_path, tempfile.gettempdir())
         
         return SearchResponse(
             search_id=search_results["search_id"],
@@ -201,8 +204,8 @@ async def search_by_image(
         
     except Exception as e:
         # Clean up temporary file on error
-        if 'temp_image_path' in locals() and os.path.exists(temp_image_path):
-            os.unlink(temp_image_path)
+        if 'temp_image_path' in locals():
+            secure_delete_file(temp_image_path, tempfile.gettempdir())
         raise HTTPException(status_code=500, detail=f"Image search failed: {str(e)}")
 
 @router.get("/history")
@@ -372,10 +375,13 @@ async def stream_video(
     _: None = Depends(rate_limit_generous)
 ):
     """
-    Stream video segment for playback
+    Stream video segment for playback (filtered by current user)
     """
     try:
-        video = db.query(Video).filter(Video.id == video_id).first()
+        video = db.query(Video).filter(
+            Video.id == video_id,
+            Video.user_id == current_user.id
+        ).first()
         if not video:
             raise HTTPException(status_code=404, detail="Video not found")
             
@@ -405,10 +411,13 @@ async def get_video_info(
     _: None = Depends(rate_limit_generous)
 ):
     """
-    Get video information for player
+    Get video information for player (filtered by current user)
     """
     try:
-        video = db.query(Video).filter(Video.id == video_id).first()
+        video = db.query(Video).filter(
+            Video.id == video_id,
+            Video.user_id == current_user.id
+        ).first()
         if not video:
             raise HTTPException(status_code=404, detail="Video not found")
             

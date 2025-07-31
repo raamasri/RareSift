@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime
 import logging
@@ -8,30 +8,71 @@ import logging
 from app.core.database import get_db
 from app.core.dependencies import rate_limit_moderate
 from app.models.user import User
+from app.core.validation import input_sanitizer
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 class ContactRequest(BaseModel):
-    name: str
-    email: str
-    company: Optional[str] = None
-    message: str
-    contact_type: str = "general"  # general, demo, sales, support
+    name: str = Field(..., min_length=1, max_length=100)
+    email: str = Field(..., max_length=254)
+    company: Optional[str] = Field(None, max_length=100)
+    message: str = Field(..., min_length=10, max_length=1000)
+    contact_type: str = Field("general", regex="^(general|demo|sales|support)$")
+    
+    @validator('name', 'company', 'message')
+    def sanitize_text_fields(cls, v):
+        if v is not None:
+            return input_sanitizer.sanitize_string(v, 'name')
+        return v
+    
+    @validator('email')
+    def validate_email(cls, v):
+        sanitized = input_sanitizer.sanitize_string(v, 'email')
+        # Basic email validation
+        if '@' not in sanitized or '.' not in sanitized.split('@')[-1]:
+            raise ValueError('Invalid email format')
+        return sanitized
 
 class DemoRequest(BaseModel):
-    name: str
-    email: str
-    company: Optional[str] = None
-    phone: Optional[str] = None
-    team_size: Optional[str] = None
-    use_case: Optional[str] = None
-    preferred_time: Optional[str] = None
-    data_volume: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=100)
+    email: str = Field(..., max_length=254)
+    company: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    team_size: Optional[str] = Field(None, max_length=50)
+    use_case: Optional[str] = Field(None, max_length=500)
+    preferred_time: Optional[str] = Field(None, max_length=100)
+    data_volume: Optional[str] = Field(None, max_length=100)
+    
+    @validator('name', 'company', 'phone', 'team_size', 'use_case', 'preferred_time', 'data_volume')
+    def sanitize_text_fields(cls, v):
+        if v is not None:
+            return input_sanitizer.sanitize_string(v, 'name')
+        return v
+    
+    @validator('email')
+    def validate_email(cls, v):
+        sanitized = input_sanitizer.sanitize_string(v, 'email')
+        if '@' not in sanitized or '.' not in sanitized.split('@')[-1]:
+            raise ValueError('Invalid email format')
+        return sanitized
 
 class NewsletterSignup(BaseModel):
-    email: str
-    source: Optional[str] = "landing_page"
+    email: str = Field(..., max_length=254)
+    source: Optional[str] = Field("landing_page", max_length=50)
+    
+    @validator('email')
+    def validate_email(cls, v):
+        sanitized = input_sanitizer.sanitize_string(v, 'email')
+        if '@' not in sanitized or '.' not in sanitized.split('@')[-1]:
+            raise ValueError('Invalid email format')
+        return sanitized
+    
+    @validator('source')
+    def sanitize_source(cls, v):
+        if v is not None:
+            return input_sanitizer.sanitize_string(v, 'name')
+        return v
 
 async def send_contact_email(contact_data: dict):
     """Background task to send contact email"""

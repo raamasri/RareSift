@@ -1,0 +1,66 @@
+# Gitleaks configuration for RareSift
+# https://github.com/gitleaks/gitleaks
+
+title = "RareSift Gitleaks Configuration"
+
+[extend]
+# useDefault will extend the base configuration with the default gitleaks rules
+useDefault = true
+
+[[rules]]
+description = "AWS Access Key ID"
+id = "aws-access-key-id"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z]{20}['\"]'''
+tags = ["key", "AWS"]
+
+[[rules]]
+description = "AWS Secret Access Key"
+id = "aws-secret-access-key"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z/+=]{40}['\"]'''
+tags = ["key", "AWS"]
+
+[[rules]]
+description = "Database Password"
+id = "database-password"
+regex = '''(?i)(db_pass|database_pass|postgres_pass)(.{0,20})?['\"][0-9a-zA-Z!@#$%^&*]{8,}['\"]'''
+tags = ["password", "database"]
+
+[[rules]]
+description = "JWT Secret"
+id = "jwt-secret"
+regex = '''(?i)(jwt_secret|jwt_key)(.{0,20})?['\"][0-9a-zA-Z!@#$%^&*]{32,}['\"]'''
+tags = ["secret", "JWT"]
+
+[[rules]]
+description = "API Key"
+id = "api-key"
+regex = '''(?i)(api_key|apikey)(.{0,20})?['\"][0-9a-zA-Z]{32,}['\"]'''
+tags = ["key", "API"]
+
+[allowlist]
+description = "Allowlist for test files and documentation"
+paths = [
+    '''.*_test\.py''',
+    '''.*_test\.js''',
+    '''.*\.test\.ts''',
+    '''.*\.test\.tsx''',
+    '''.*/tests/.*''',
+    '''.*/test/.*''',
+    '''.*\.md''',
+    '''.*README.*''',
+    '''.*CHANGELOG.*''',
+    '''.*\.example''',
+    '''.*\.template'''
+]
+
+regexes = [
+    '''test-secret-key''',
+    '''example-password''',
+    '''dummy-api-key''',
+    '''fake-jwt-secret''',
+    '''placeholder-secret''',
+    '''YOUR-SECRET-HERE''',
+    '''your-secret-key''',
+    '''dev-secret-key''',
+    '''development-only'''
+]

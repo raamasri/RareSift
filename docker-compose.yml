@@ -1,3 +1,7 @@
+# DEVELOPMENT ONLY - DO NOT USE IN PRODUCTION
+# This file contains default credentials for development
+# For production, use docker-compose.prod.yml with proper environment variables
+
 services:
   postgres:
     image: pgvector/pgvector:pg15
