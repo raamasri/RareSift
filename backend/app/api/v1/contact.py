@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import logging
@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 class ContactRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     company: Optional[str] = None
     message: str
     contact_type: str = "general"  # general, demo, sales, support
 
 class DemoRequest(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     company: Optional[str] = None
     phone: Optional[str] = None
     team_size: Optional[str] = None
@@ -30,7 +30,7 @@ class DemoRequest(BaseModel):
     data_volume: Optional[str] = None
 
 class NewsletterSignup(BaseModel):
-    email: EmailStr
+    email: str
     source: Optional[str] = "landing_page"
 
 async def send_contact_email(contact_data: dict):

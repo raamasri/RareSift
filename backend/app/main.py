@@ -73,6 +73,9 @@ try:
     os.makedirs(os.path.join(settings.upload_dir, "exports"), exist_ok=True)
     # Mount static files for serving uploaded content
     app.mount("/static", StaticFiles(directory=settings.upload_dir), name="static")
+    # Mount frames directory for serving extracted frame images
+    if os.path.exists("/app/frames"):
+        app.mount("/frames", StaticFiles(directory="/app/frames"), name="frames")
 except Exception as e:
     logger.warning(f"Could not create upload directories: {e}")
 

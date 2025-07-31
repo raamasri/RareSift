@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.auth import (
@@ -24,7 +24,7 @@ router = APIRouter()
 
 # Pydantic models
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     full_name: str
     company: Optional[str] = None

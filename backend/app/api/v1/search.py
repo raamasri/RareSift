@@ -59,9 +59,7 @@ embedding_service = EmbeddingService()
 @router.post("/text", response_model=SearchResponse)
 async def search_by_text(
     request: TextSearchRequest,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-    _: None = Depends(rate_limit_moderate)
+    db: Session = Depends(get_db)
 ):
     """
     Search for video frames using natural language text query
@@ -81,16 +79,46 @@ async def search_by_text(
             filters=filters_dict
         )
         
-        # Update user search statistics
-        current_user.search_count += 1
-        db.commit()
+        # Skip user statistics for demo mode
         
         # Convert frame paths to URLs
+        def map_frame_path_to_actual_file(frame_path: str) -> str:
+            """Map database frame path to actual file name"""
+            basename = os.path.basename(frame_path)
+            
+            # Check if file exists as-is first
+            if os.path.exists(f"/app/frames/{basename}"):
+                return basename
+            
+            # Try mapping old naming convention to new
+            # driving_camera_gh010001_frame_001.jpg -> drive_01_frame_000.jpg  
+            if 'driving_camera_gh010001' in basename:
+                frame_num = basename.split('_')[-1].replace('.jpg', '')
+                actual_frame_num = str(int(frame_num) - 1).zfill(3)
+                mapped_name = f"drive_01_frame_{actual_frame_num}.jpg"
+                if os.path.exists(f"/app/frames/{mapped_name}"):
+                    return mapped_name
+            elif 'driving_camera_gh010002' in basename:
+                frame_num = basename.split('_')[-1].replace('.jpg', '')
+                actual_frame_num = str(int(frame_num) - 1).zfill(3)
+                mapped_name = f"drive_02_frame_{actual_frame_num}.jpg"
+                if os.path.exists(f"/app/frames/{mapped_name}"):
+                    return mapped_name
+            elif 'driving_camera_gh010003' in basename:
+                frame_num = basename.split('_')[-1].replace('.jpg', '')
+                actual_frame_num = str(int(frame_num) - 1).zfill(3)
+                mapped_name = f"drive_03_frame_{actual_frame_num}.jpg"
+                if os.path.exists(f"/app/frames/{mapped_name}"):
+                    return mapped_name
+            
+            # Return original if no mapping works
+            return basename
+        
         for result in search_results["results"]:
             if result["frame_path"]:
-                # Convert file path to URL
-                relative_path = os.path.relpath(result["frame_path"], settings.upload_dir)
-                result["frame_url"] = f"/static/{relative_path}"
+                # Map to actual file name
+                actual_filename = map_frame_path_to_actual_file(result["frame_path"])
+                result["frame_url"] = f"/frames/{actual_filename}"
         
         return SearchResponse(
             search_id=search_results["search_id"],
@@ -151,9 +179,7 @@ async def search_by_image(
             filters=filters_dict
         )
         
-        # Update user search statistics
-        current_user.search_count += 1
-        db.commit()
+        # Skip user statistics for demo mode
         
         # Convert frame paths to URLs
         for result in search_results["results"]:

@@ -56,8 +56,8 @@ export default function VideoPlayer({
   const [error, setError] = useState<string | null>(null)
 
   const videoFilename = getVideoFilename(videoId)
-  // For demo purposes, we'll show a placeholder since we don't have actual video files accessible
-  const videoSrc = `/video_assets/${videoFilename}` // This would be the path if videos were served statically
+  // Use backend streaming endpoint for actual video playback
+  const videoSrc = `http://localhost:8000/api/v1/videos/${videoId}/stream`
 
   useEffect(() => {
     const video = videoRef.current
@@ -85,7 +85,7 @@ export default function VideoPlayer({
 
     const handleError = () => {
       setIsLoading(false)
-      setError('Video file not available in demo mode')
+      setError('Failed to load video file')
     }
 
     const handleTimeUpdate = () => {
@@ -152,27 +152,27 @@ export default function VideoPlayer({
   return (
     <div className={`relative bg-slate-900 rounded-lg overflow-hidden ${className}`}>
       {error ? (
-        // Demo mode placeholder with frame preview
-        <div className="w-full h-64 lg:h-96 bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center text-white p-8">
+        // Error state - video failed to load
+        <div className="w-full h-64 lg:h-96 bg-gradient-to-br from-red-900/50 to-slate-900 flex flex-col items-center justify-center text-white p-8">
           <div className="text-center space-y-4">
-            <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
-              <PlayIcon className="h-10 w-10 text-indigo-400" />
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+              <PlayIcon className="h-10 w-10 text-red-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white">{videoFilename}</h3>
+            <h3 className="text-xl font-semibold text-white">Video Load Error</h3>
             <p className="text-slate-300 text-sm max-w-md">
-              Video playback at timestamp {formatTime(startTime)} would show here in production.
+              {error}
             </p>
             <div className="flex flex-col space-y-2 text-xs text-slate-400">
               <div>🎹 Video ID: {videoId}</div>
               <div>⏰ Jump to: {formatTime(startTime)}</div>
               <div>🎬 Filename: {videoFilename}</div>
             </div>
-            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <p className="text-amber-300 text-sm font-medium">Demo Mode</p>
-              <p className="text-amber-200/80 text-xs mt-1">
-                In production, this would play the actual video file and jump to the exact frame where the search match was found.
-              </p>
-            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry
+            </button>
           </div>
         </div>
       ) : (

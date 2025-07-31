@@ -96,8 +96,33 @@ export function LocalSearchPage() {
   }
 
   const handlePlayVideo = (result: SearchResult) => {
-    // Map result ID to video ID - this is a simplified mapping for demo
-    const videoId = parseInt(result.id) || 1
+    // Extract video ID from video_source filename (e.g., "GH010001.MP4" -> 1)
+    const videoSource = result.video_source
+    let videoId = 1 // default fallback
+    
+    if (videoSource.includes('GH010001')) videoId = 1
+    else if (videoSource.includes('GH010002')) videoId = 2
+    else if (videoSource.includes('GH010003')) videoId = 3
+    else if (videoSource.includes('GH010004')) videoId = 4
+    else if (videoSource.includes('GH010005')) videoId = 5
+    else if (videoSource.includes('GH010006')) videoId = 6
+    else if (videoSource.includes('GH010007')) videoId = 7
+    else if (videoSource.includes('GH010010')) videoId = 8
+    else if (videoSource.includes('GH020010')) videoId = 9
+    else if (videoSource.includes('GH010031')) videoId = 10
+    else if (videoSource.includes('GH010032')) videoId = 11
+    else if (videoSource.includes('GH010033')) videoId = 12
+    else if (videoSource.includes('GH010034')) videoId = 13
+    else if (videoSource.includes('GH010035')) videoId = 14
+    else if (videoSource.includes('GH010036')) videoId = 15
+    else if (videoSource.includes('GH010037')) videoId = 16
+    else if (videoSource.includes('GH010038')) videoId = 17
+    else if (videoSource.includes('GH010039')) videoId = 18
+    else if (videoSource.includes('GH010041')) videoId = 19
+    else if (videoSource.includes('GH010042')) videoId = 20
+    else if (videoSource.includes('GH010043')) videoId = 21
+    else if (videoSource.includes('GH010045')) videoId = 22
+    
     setSelectedVideoId(videoId)
     setSelectedTimestamp(result.timestamp)
   }

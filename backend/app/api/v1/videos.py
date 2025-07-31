@@ -1,11 +1,13 @@
 import os
 import shutil
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from datetime import datetime
 import time
+import re
 
 from app.core.database import get_db
 from app.core.config import settings
@@ -276,4 +278,112 @@ async def get_processing_status(
             "frames_done": frames_count > 0,
             "embeddings_done": embeddings_count == frames_count if frames_count > 0 else False
         }
-    } 
+    }
+
+def get_video_path_by_id(video_id: int) -> str:
+    """Map video ID to actual video file path from video_assets directory"""
+    # This maps video IDs to actual files in the video_assets directory
+    video_assets_dir = "/app/video_assets"
+    
+    # Video ID mapping based on the actual files we have
+    if 1 <= video_id <= 9:
+        # Driving camera footage
+        video_filename = f"GH0{10000 + video_id}.MP4"
+        return os.path.join(video_assets_dir, "driving_camera_footage", video_filename)
+    elif 10 <= video_id <= 22:
+        # Static camera footage - map to actual available files
+        static_files = [31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 43, 45]
+        static_index = video_id - 10  # video_id 10 -> index 0, 11 -> index 1, etc.
+        if static_index < len(static_files):
+            file_num = static_files[static_index]
+            video_filename = f"GH0100{file_num:02d}.MP4"
+            return os.path.join(video_assets_dir, "static_camera_footage", video_filename)
+        else:
+            raise HTTPException(status_code=404, detail="Video not found")
+    else:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+def range_requests_response(
+    request: Request, 
+    file_path: str, 
+    content_type: str = "video/mp4"
+):
+    """Generate streaming response with range request support for video files"""
+    file_size = os.path.getsize(file_path)
+    
+    # Parse Range header
+    range_header = request.headers.get("Range")
+    if range_header:
+        # Parse range like "bytes=0-1023" or "bytes=1024-"
+        range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+        if range_match:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+            
+            # Ensure valid range
+            if start >= file_size:
+                raise HTTPException(status_code=416, detail="Range not satisfiable")
+            
+            if end >= file_size:
+                end = file_size - 1
+            
+            content_length = end - start + 1
+            
+            def iterfile():
+                with open(file_path, "rb") as f:
+                    f.seek(start)
+                    remaining = content_length
+                    while remaining:
+                        chunk_size = min(8192, remaining)
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                        yield chunk
+            
+            return StreamingResponse(
+                iterfile(),
+                status_code=206,
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{file_size}",
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(content_length),
+                    "Content-Type": content_type,
+                },
+            )
+    
+    # If no range requested, stream entire file
+    def iterfile():
+        with open(file_path, "rb") as f:
+            while chunk := f.read(8192):
+                yield chunk
+    
+    return StreamingResponse(
+        iterfile(),
+        headers={
+            "Content-Length": str(file_size),
+            "Accept-Ranges": "bytes", 
+            "Content-Type": content_type,
+        },
+    )
+
+@router.get("/{video_id}/stream")
+async def stream_video(
+    video_id: int,
+    request: Request
+):
+    """
+    Stream video file with range request support for seeking
+    """
+    try:
+        video_path = get_video_path_by_id(video_id)
+        
+        if not os.path.exists(video_path):
+            raise HTTPException(status_code=404, detail="Video file not found")
+        
+        return range_requests_response(request, video_path)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to stream video: {str(e)}") 

@@ -26,6 +26,7 @@ services:
       - ./backend:/app
       - /app/__pycache__
       - uploads_data:/app/uploads
+      - ./video_assets:/app/video_assets
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/raresift
       - REDIS_URL=redis://redis:6379

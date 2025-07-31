@@ -75,19 +75,90 @@ class EmbeddingService:
             image_path = image_input if isinstance(image_input, str) else "PIL_Image"
             raise Exception(f"Failed to encode image {image_path}: {str(e)}")
     
+    def enhance_object_query(self, query: str) -> str:
+        """
+        Enhance object queries with detailed descriptions for better CLIP detection
+        """
+        query_lower = query.lower().strip()
+        
+        # Vehicle detection enhancements
+        vehicle_mappings = {
+            'bicyclist': 'person riding a bicycle on the road, cyclist with bike helmet',
+            'bicycle': 'bicycle being ridden by a person, bike with wheels and handlebars',
+            'motorbike': 'motorcycle with rider, person on a motorbike, two-wheeled motor vehicle',
+            'motorcycle': 'motorcycle with rider, person on a motorbike, two-wheeled motor vehicle',
+            'wheelchair': 'person in a wheelchair, mobility aid with wheels, wheelchair user',
+            'bus': 'large public transit bus, city bus with passengers, long vehicle with multiple windows',
+            'train': 'passenger train, railway locomotive, train cars on tracks',
+            'truck': 'large truck vehicle, semi-truck, cargo truck with trailer',
+            'construction zone': 'construction site with orange cones, road work area, construction equipment and barriers',
+            'traffic light': 'traffic signal with red yellow green lights, intersection traffic control',
+            'stop sign': 'red octagonal stop sign, traffic stop sign at intersection',
+            'crosswalk': 'pedestrian crossing, zebra crossing stripes on road',
+            'pedestrian': 'person walking on sidewalk or crossing street, pedestrian in urban area'
+        }
+        
+        # Color-based vehicle searches
+        color_vehicle_mappings = {
+            'white car': 'white colored passenger car, light colored vehicle on road',
+            'black car': 'black colored passenger car, dark colored vehicle on road',
+            'red car': 'red colored passenger car, bright red vehicle on road',
+            'blue car': 'blue colored passenger car, blue vehicle on road',
+            'silver car': 'silver colored passenger car, metallic gray vehicle on road',
+            'gray car': 'gray colored passenger car, grey vehicle on road',
+            'white truck': 'white colored truck, light colored large vehicle',
+            'red truck': 'red colored truck, bright red large vehicle',
+            'blue truck': 'blue colored truck, blue large vehicle'
+        }
+        
+        # Generic vehicle type enhancements
+        generic_mappings = {
+            'car': 'passenger car on road, automobile vehicle, sedan or hatchback car',
+            'vehicle': 'motor vehicle on road, car or truck driving',
+            'suv': 'sport utility vehicle, large passenger SUV, tall car with high ground clearance'
+        }
+        
+        # Check for exact matches first
+        if query_lower in vehicle_mappings:
+            return f"{query}, {vehicle_mappings[query_lower]}"
+        
+        if query_lower in color_vehicle_mappings:
+            return f"{query}, {color_vehicle_mappings[query_lower]}"
+            
+        if query_lower in generic_mappings:
+            return f"{query}, {generic_mappings[query_lower]}"
+        
+        # Check for partial matches (multi-word queries)
+        for key, enhancement in vehicle_mappings.items():
+            if key in query_lower:
+                return f"{query}, {enhancement}"
+                
+        for key, enhancement in color_vehicle_mappings.items():
+            if key in query_lower:
+                return f"{query}, {enhancement}"
+        
+        # Handle "any color car" type queries
+        if 'car' in query_lower and ('any color' in query_lower or 'colored' in query_lower):
+            return f"{query}, passenger car of any color on road, automobile vehicle driving"
+        
+        return query
+
     async def encode_text(self, text: str) -> np.ndarray:
         """
-        Generate CLIP embedding for text
+        Generate CLIP embedding for text with object query enhancement
         """
         if not self.is_initialized:
             await self.initialize()
             
         try:
+            # Enhance the query for better object detection
+            enhanced_text = self.enhance_object_query(text)
+            
             # Run tokenization and inference in executor to avoid blocking
             loop = asyncio.get_event_loop()
             
             def _encode():
-                text_input = clip.tokenize([text]).to(self.device)
+                text_input = clip.tokenize([enhanced_text]).to(self.device)
                 with torch.no_grad():
                     text_features = self.model.encode_text(text_input)
                     # Normalize embedding
@@ -193,7 +264,7 @@ class EmbeddingService:
                     f.id as frame_id,
                     v.id as video_id,
                     f.timestamp,
-                    1 - (e.embedding <=> :query_vector) as similarity,
+                    1 - (e.embedding <=> CAST(:query_vector AS vector)) as similarity,
                     f.frame_path,
                     f.frame_metadata,
                     v.original_filename as video_filename,
@@ -202,8 +273,8 @@ class EmbeddingService:
                 JOIN frames f ON e.frame_id = f.id
                 JOIN videos v ON f.video_id = v.id
                 {where_clause}
-                HAVING 1 - (e.embedding <=> :query_vector) >= :similarity_threshold
-                ORDER BY e.embedding <=> :query_vector
+                AND 1 - (e.embedding <=> CAST(:query_vector AS vector)) >= :similarity_threshold
+                ORDER BY e.embedding <=> CAST(:query_vector AS vector)
                 LIMIT :limit_results
             """)
             
@@ -234,7 +305,7 @@ class EmbeddingService:
             # for performance reasons with large datasets
             total_found = len(similarities)
             if len(similarities) == limit:
-                total_found = f"{limit}+"  # Indicate there may be more results
+                total_found = limit  # Just return the limit, don't use string
             
             return {
                 "results": similarities,
