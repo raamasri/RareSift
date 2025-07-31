@@ -1,26 +1,8 @@
 {
-  "name": "raresift-frontend",
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ],
   "env": {
     "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com",
     "NEXT_PUBLIC_ENVIRONMENT": "production"
-  },
-  "functions": {
-    "app/page.tsx": {
-      "maxDuration": 30
-    }
   },
   "headers": [
     {
