@@ -7,6 +7,7 @@ import { getSafeApiUrl } from '../../utils/security'
 interface VideoPlayerProps {
   videoId: number
   startTime?: number
+  timestamp?: number
   className?: string
   autoPlay?: boolean
   showControls?: boolean
