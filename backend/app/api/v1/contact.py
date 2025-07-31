@@ -18,7 +18,7 @@ class ContactRequest(BaseModel):
     email: str = Field(..., max_length=254)
     company: Optional[str] = Field(None, max_length=100)
     message: str = Field(..., min_length=10, max_length=1000)
-    contact_type: str = Field("general", regex="^(general|demo|sales|support)$")
+    contact_type: str = Field("general", pattern="^(general|demo|sales|support)$")
     
     @validator('name', 'company', 'message')
     def sanitize_text_fields(cls, v):

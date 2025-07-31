@@ -3,7 +3,7 @@ Security middleware for RareSift application
 """
 
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
 import time
 from typing import Dict, Any

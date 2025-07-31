@@ -5,8 +5,11 @@ from typing import Optional, Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.user import User, Session as UserSession
 from app.core.config import settings
+from app.core.database import get_db
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -187,3 +190,20 @@ def invalidate_session(db: Session, session_token: str) -> bool:
         return True
     
     return False
+
+
+# Security scheme for optional authentication
+security = HTTPBearer(auto_error=False)
+
+def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Get current user from token, returns None if not authenticated"""
+    if not credentials:
+        return None
+    
+    try:
+        return get_user_by_token(db, credentials.credentials)
+    except Exception:
+        return None

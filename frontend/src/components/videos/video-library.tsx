@@ -1,14 +1,38 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { VideoList } from './video-list'
 import { LocalVideoLibrary } from './local-video-library'
 import { Switch } from '@headlessui/react'
 import { ServerIcon, FolderIcon } from '@heroicons/react/24/outline'
+import { auth, tokenManager } from '@/lib/auth'
 import clsx from 'clsx'
 
 export default function VideoLibrary() {
   const [useLocalLibrary, setUseLocalLibrary] = useState(true)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+
+  // Auto-login as demo user when switching to database mode
+  const handleModeSwitch = async (useLocal: boolean) => {
+    if (!useLocal && !tokenManager.isAuthenticated()) {
+      // Switching to database mode but not authenticated - login as demo user
+      setIsAuthenticating(true)
+      try {
+        await auth.login({
+          username: 'demo@raresift.com',
+          password: 'demo123'
+        })
+        console.log('Auto-logged in as demo user')
+      } catch (error) {
+        console.error('Failed to auto-login as demo user:', error)
+        // Fall back to local mode if demo login fails
+        useLocal = true
+      } finally {
+        setIsAuthenticating(false)
+      }
+    }
+    setUseLocalLibrary(useLocal)
+  }
 
   return (
     <div className="space-y-6">
@@ -20,7 +44,9 @@ export default function VideoLibrary() {
             <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
               {useLocalLibrary 
                 ? "Browsing local video assets with demo data"
-                : "Connected to backend database (requires server)"
+                : isAuthenticating 
+                  ? "Authenticating with demo user..."
+                  : "Connected to backend database (demo user)"
               }
             </p>
           </div>
@@ -42,10 +68,12 @@ export default function VideoLibrary() {
               
               <Switch
                 checked={useLocalLibrary}
-                onChange={setUseLocalLibrary}
+                onChange={handleModeSwitch}
+                disabled={isAuthenticating}
                 className={clsx(
                   'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                  useLocalLibrary ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+                  useLocalLibrary ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600',
+                  isAuthenticating && 'opacity-50 cursor-not-allowed'
                 )}
               >
                 <span
