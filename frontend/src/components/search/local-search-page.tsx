@@ -96,6 +96,8 @@ export function LocalSearchPage() {
   }
 
   const handlePlayVideo = (result: SearchResult) => {
+    console.log('handlePlayVideo called with result:', result)
+    
     // Extract video ID from video_source filename (e.g., "GH010001.MP4" -> 1)
     const videoSource = result.video_source
     let videoId = 1 // default fallback
@@ -123,6 +125,7 @@ export function LocalSearchPage() {
     else if (videoSource.includes('GH010043')) videoId = 21
     else if (videoSource.includes('GH010045')) videoId = 22
     
+    console.log('Setting video player - videoId:', videoId, 'timestamp:', result.timestamp)
     setSelectedVideoId(videoId)
     setSelectedTimestamp(result.timestamp)
   }
@@ -261,7 +264,12 @@ export function LocalSearchPage() {
                         {/* Play Button */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black bg-opacity-20">
                           <button 
-                            onClick={() => handlePlayVideo(result)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              console.log('Play button clicked for video:', result.video_source)
+                              handlePlayVideo(result)
+                            }}
                             className="w-12 h-12 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-colors hover:scale-110"
                           >
                             <PlayIcon className="h-6 w-6 text-slate-900 ml-1" />
@@ -316,7 +324,12 @@ export function LocalSearchPage() {
                           <span>View Context</span>
                         </button>
                         <button 
-                          onClick={() => handlePlayVideo(result)}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            console.log('Play video button clicked for:', result.video_source)
+                            handlePlayVideo(result)
+                          }}
                           className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center space-x-1"
                         >
                           <PlayIcon className="h-3 w-3" />
@@ -334,15 +347,27 @@ export function LocalSearchPage() {
 
       {/* Video Player Modal */}
       {selectedVideoId && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]"
+          onClick={() => {
+            console.log('Modal backdrop clicked - closing video player')
+            setSelectedVideoId(null)
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-600">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Video Preview - {formatTimestamp(selectedTimestamp)}
+                Video Preview - {formatTimestamp(selectedTimestamp)} (Video #{selectedVideoId})
               </h3>
               <button
-                onClick={() => setSelectedVideoId(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl"
+                onClick={() => {
+                  console.log('Close button clicked - closing video player')
+                  setSelectedVideoId(null)
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full"
               >
                 ×
               </button>

@@ -49,6 +49,7 @@ export function SearchResults({ results }: SearchResultsProps) {
   }
 
   const handlePlayVideo = (videoId: number, timestamp: number) => {
+    console.log('handlePlayVideo called - videoId:', videoId, 'timestamp:', timestamp)
     setSelectedVideoId(videoId)
     setSelectedTimestamp(timestamp)
   }
@@ -317,7 +318,9 @@ export function SearchResults({ results }: SearchResultsProps) {
                 <div 
                   className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
                   onClick={(e) => {
+                    e.preventDefault()
                     e.stopPropagation() // Prevent triggering selection
+                    console.log('Hover play button clicked for video:', result.video_id, 'timestamp:', result.timestamp)
                     handlePlayVideo(result.video_id, result.timestamp)
                   }}
                 >
@@ -422,7 +425,12 @@ export function SearchResults({ results }: SearchResultsProps) {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handlePlayVideo(result.video_id, result.timestamp)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        console.log('Play button clicked for video:', result.video_id, 'timestamp:', result.timestamp)
+                        handlePlayVideo(result.video_id, result.timestamp)
+                      }}
                       className="flex items-center space-x-2 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-sm font-semibold transition-all duration-200"
                     >
                       <PlayIcon className="h-4 w-4" />
@@ -526,15 +534,27 @@ export function SearchResults({ results }: SearchResultsProps) {
 
       {/* Video Player Modal */}
       {selectedVideoId && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]"
+          onClick={() => {
+            console.log('Modal backdrop clicked - closing video player')
+            setSelectedVideoId(null)
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                Video Preview - {formatTimestamp(selectedTimestamp)}
+                Video Preview - {formatTimestamp(selectedTimestamp)} (Video #{selectedVideoId})
               </h3>
               <button
-                onClick={() => setSelectedVideoId(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => {
+                  console.log('Close button clicked - closing video player')
+                  setSelectedVideoId(null)
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full"
               >
                 ×
               </button>
