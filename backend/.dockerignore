@@ -1,0 +1,92 @@
+# Development files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.env.*
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large directories that shouldn't be in container
+frames/
+uploads/
+video_assets/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# Development and testing files
+*test*.py
+test_*.py
+tests/
+monitor_*.py
+cleanup_*.py
+update_*.py
+regenerate_*.py
+complete_*.py
+ingest_*.py
+
+# Migration scripts (handled by alembic)
+migrate_*.py
+simple_migration.py
+create_migration.py
+
+# Backup files
+*.bak
+*.backup
+
+# Documentation
+*.md
+docs/
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
