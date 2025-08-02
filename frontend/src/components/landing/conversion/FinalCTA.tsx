@@ -20,14 +20,13 @@ export default function FinalCTA() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Main Headline */}
           <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-            Ready to transform your{' '}
             <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              AV development?
+              Pilot in 30 days
             </span>
           </h2>
           
           <p className="mt-6 text-xl leading-8 text-gray-200 max-w-2xl mx-auto">
-            Built for autonomous vehicle teams who need precise scenario discovery and faster development cycles.
+            Give us 100–500 GB of logs. We'll return verified edge-case clips and export packs you can use the same day.
           </p>
 
           {/* Value Props */}
@@ -36,34 +35,34 @@ export default function FinalCTA() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm mb-4">
                 <ClockIcon className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Start in Minutes</h3>
-              <p className="text-sm text-gray-300">Upload your first video and start searching immediately</p>
+              <h3 className="font-semibold text-white mb-2">2–4 weeks</h3>
+              <p className="text-sm text-gray-300">Success = verified matches + clean exports into your pipeline</p>
             </div>
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm mb-4">
                 <ShieldCheckIcon className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Risk-Free Trial</h3>
-              <p className="text-sm text-gray-300">14 days free, no credit card required</p>
+              <h3 className="font-semibold text-white mb-2">Your VPC</h3>
+              <p className="text-sm text-gray-300">Data stays in your cloud, we never train on customer data</p>
             </div>
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm mb-4">
                 <RocketLaunchIcon className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-semibold text-white mb-2">Instant Results</h3>
-              <p className="text-sm text-gray-300">See 90% time savings from day one</p>
+              <h3 className="font-semibold text-white mb-2">Export-ready</h3>
+              <p className="text-sm text-gray-300">Clips + JSON manifests with hashes, timecodes, source paths</p>
             </div>
           </div>
 
           {/* Primary CTA */}
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/app"
+            <button
+              onClick={() => setIsDemoFormOpen(true)}
               className="group inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-lg font-semibold text-gray-900 shadow-xl hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transform hover:scale-105 transition-all duration-200"
             >
-              Start Free Trial
+              Book a pilot
               <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </button>
             <button
               onClick={() => setIsDemoFormOpen(true)}
               className="group inline-flex items-center justify-center rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 transition-all duration-200"

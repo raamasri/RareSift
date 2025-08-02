@@ -430,7 +430,7 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                     onKeyPress={(e) => e.key === 'Enter' && handleTextSearch()}
                     onFocus={() => query.length > 1 && setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    placeholder="Describe the scenario... (e.g., 'highway driving', 'intersection view', 'cars in traffic')"
+                    placeholder="Describe a scenario or paste a link to a clip..."
                     className="w-full pl-12 pr-4 py-4 text-base border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 relative z-0"
                     disabled={isLoading}
                   />
@@ -469,19 +469,26 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                 </p>
               </div>
               
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Available Content</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="space-y-1">
-                    <div className="text-blue-700 dark:text-blue-400">"highway driving perspective"</div>
-                    <div className="text-blue-700 dark:text-blue-400">"cars on multi-lane highway"</div>
-                    <div className="text-blue-700 dark:text-blue-400">"vehicles in traffic"</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-blue-700 dark:text-blue-400">"sunny day driving"</div>
-                    <div className="text-blue-700 dark:text-blue-400">"clear road conditions"</div>
-                    <div className="text-blue-700 dark:text-blue-400">"daytime footage"</div>
-                  </div>
+              {/* Quick Search Chips */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Quick scenarios
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Pedestrian at night",
+                    "Freeway cut-ins", 
+                    "Left turns in rain",
+                    "Work zones"
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => setQuery(chip)}
+                      className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    >
+                      {chip}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

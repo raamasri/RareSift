@@ -155,32 +155,31 @@ export default function HeroSection() {
 
             {/* Main Headline */}
             <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl mb-6">
-              Find Any{' '}
+              Find{' '}
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Driving Scenario
+                rare driving scenarios
               </span>{' '}
-              in Seconds
+              in seconds
             </h1>
 
             {/* Subheading */}
             <p className="text-xl leading-8 text-gray-100 mb-8 max-w-xl">
-              Transform hours of manual video review into instant discoveries. 
-              Our AI searches through terabytes of autonomous vehicle data to find exactly what you need.
+              Type a description or drop a clip. RareSift searches millions of frames across your private logs and returns synchronized matches you can export to training, simulation, or tests.
             </p>
 
-            {/* Key Features */}
+            {/* Quick Metrics Strip */}
             <div className="flex gap-8 mb-8">
               <div>
-                <div className="text-2xl font-bold text-white">512D</div>
-                <div className="text-sm text-gray-200">Vector Search</div>
+                <div className="text-2xl font-bold text-white">&lt; 2s</div>
+                <div className="text-sm text-gray-200">median query latency</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">1/sec</div>
-                <div className="text-sm text-gray-200">Frame Rate</div>
+                <div className="text-2xl font-bold text-white">100+</div>
+                <div className="text-sm text-gray-200">verified edge-case clips in 24h</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">100TB</div>
-                <div className="text-sm text-gray-200">Scale Support</div>
+                <div className="text-2xl font-bold text-white">1-click</div>
+                <div className="text-sm text-gray-200">export with full lineage</div>
               </div>
             </div>
 
@@ -198,8 +197,16 @@ export default function HeroSection() {
                 className="group inline-flex items-center justify-center rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-8 py-4 text-lg font-semibold text-gray-900 dark:text-white hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200"
               >
                 <PlayIcon className="mr-2 h-5 w-5" />
-                Watch Demo
+                Watch 90-sec demo
               </button>
+            </div>
+
+            {/* Privacy Micro Note */}
+            <div className="mt-6 flex items-center gap-2 text-sm text-gray-300">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
+              <span>Runs in your VPC or on-prem. We never train on your data.</span>
             </div>
 
             {/* Technology Stack */}
