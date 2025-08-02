@@ -28,7 +28,7 @@ pydantic[email]==2.5.0
 pydantic-settings==2.1.0
 
 # Image processing (optimized for production)
-pillow==10.1.0
+pillow==11.3.0
 opencv-python-headless==4.8.1.78
 
 # ML/AI dependencies (CPU-optimized for faster builds)
