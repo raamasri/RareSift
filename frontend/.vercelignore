@@ -39,3 +39,14 @@ coverage
 # Misc
 *.tgz
 *.tar.gz
+
+# Large video assets - exclude from deployment
+public/videos/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# Video assets over 100MB
+public/demo-assets/videos/
