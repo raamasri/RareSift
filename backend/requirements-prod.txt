@@ -32,8 +32,9 @@ pillow==10.1.0
 opencv-python-headless==4.8.1.78
 
 # ML/AI dependencies (CPU-optimized for faster builds)
-torch==2.2.0+cpu --index-url https://download.pytorch.org/whl/cpu
-torchvision==0.17.0+cpu --index-url https://download.pytorch.org/whl/cpu
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.2.0+cpu
+torchvision==0.17.0+cpu
 transformers==4.36.0
 git+https://github.com/openai/CLIP.git
 
