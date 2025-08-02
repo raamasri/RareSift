@@ -1,0 +1,366 @@
+import asyncio
+import base64
+import io
+import numpy as np
+import os
+from typing import List, Optional, Union
+from PIL import Image
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+import time
+import requests
+
+from app.core.config import settings
+from app.models.video import Frame, Search
+
+# Try to import OpenAI, fall back to requests if not available
+try:
+    import openai
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+
+
+class OpenAIEmbeddingService:
+    """
+    OpenAI-powered embedding service for high-quality CLIP embeddings
+    Uses OpenAI's vision models for image understanding and text embeddings
+    """
+    
+    def __init__(self):
+        self.client = None
+        self.is_initialized = False
+        self.image_model = "gpt-4o"  # Current vision model
+        self.embedding_model = "text-embedding-ada-002"  # 1536 dimensions - closer to CLIP's 512
+        
+    async def initialize(self):
+        """Initialize the OpenAI client"""
+        if not self.is_initialized:
+            if not settings.openai_api_key:
+                raise ValueError("OpenAI API key not found in settings")
+            
+            self.client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+            self.is_initialized = True
+            print(f"OpenAI embedding service initialized with {self.embedding_model}")
+    
+    def _encode_image_to_base64(self, image_input: Union[str, Image.Image]) -> str:
+        """Convert image to base64 for OpenAI API"""
+        if isinstance(image_input, str):
+            # File path
+            with open(image_input, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
+        else:
+            # PIL Image
+            buffer = io.BytesIO()
+            image_input.save(buffer, format="JPEG")
+            return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    
+    async def encode_image(self, image_input: Union[str, Image.Image]) -> np.ndarray:
+        """
+        Generate high-quality embedding for an image using OpenAI's vision model
+        """
+        if not self.is_initialized:
+            await self.initialize()
+            
+        try:
+            # Convert image to base64
+            base64_image = self._encode_image_to_base64(image_input)
+            
+            # Use GPT-4 Vision to describe the image in detail
+            vision_response = await self.client.chat.completions.create(
+                model=self.image_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text", 
+                                "text": "Describe this traffic/driving scene in detail. Focus on: vehicles (cars, trucks, motorcycles, bicycles), road infrastructure (traffic lights, signs, intersections), weather conditions, time of day, and any notable traffic situations. Be specific about vehicle types, colors, and positions."
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}",
+                                    "detail": "high"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=300
+            )
+            
+            # Get the detailed description
+            description = vision_response.choices[0].message.content
+            
+            # Generate embedding from the detailed description
+            embedding_response = await self.client.embeddings.create(
+                model=self.embedding_model,
+                input=description
+            )
+            
+            # Convert to numpy array
+            embedding = np.array(embedding_response.data[0].embedding, dtype=np.float32)
+            
+            # Normalize the embedding
+            embedding = embedding / np.linalg.norm(embedding)
+            
+            return embedding
+            
+        except Exception as e:
+            image_path = image_input if isinstance(image_input, str) else "PIL_Image"
+            raise Exception(f"Failed to encode image {image_path} with OpenAI: {str(e)}")
+    
+    async def encode_text(self, text: str) -> np.ndarray:
+        """
+        Generate high-quality embedding for text query using OpenAI
+        """
+        if not self.is_initialized:
+            await self.initialize()
+            
+        try:
+            # Enhance the query for better vehicle/traffic detection
+            enhanced_query = self.enhance_traffic_query(text)
+            
+            # Generate embedding
+            response = await self.client.embeddings.create(
+                model=self.embedding_model,
+                input=enhanced_query
+            )
+            
+            # Convert to numpy array
+            embedding = np.array(response.data[0].embedding, dtype=np.float32)
+            
+            # Normalize the embedding
+            embedding = embedding / np.linalg.norm(embedding)
+            
+            return embedding
+            
+        except Exception as e:
+            raise Exception(f"Failed to encode text '{text}' with OpenAI: {str(e)}")
+    
+    def enhance_traffic_query(self, query: str) -> str:
+        """
+        Enhance traffic/driving queries for better semantic matching
+        """
+        query_lower = query.lower().strip()
+        
+        # Vehicle-specific enhancements
+        vehicle_enhancements = {
+            'motorcycle': 'motorcycle rider on road, person riding motorbike on street, two-wheeled motor vehicle in traffic',
+            'motorbike': 'motorcycle rider on road, person riding motorbike on street, two-wheeled motor vehicle in traffic',
+            'bicycle': 'person riding bicycle on road, cyclist with bike helmet, bicycle in traffic lane',
+            'car': 'passenger car driving on road, automobile in traffic, sedan or vehicle on street',
+            'truck': 'large truck vehicle on highway, semi-truck or cargo truck on road',
+            'bus': 'public transit bus on street, large passenger bus in traffic',
+            'pedestrian': 'person walking on sidewalk or crossing street, pedestrian near roadway',
+            'traffic light': 'traffic signal with colored lights, intersection traffic control device',
+            'intersection': 'road intersection with traffic signals, crossroads with vehicles',
+            'highway': 'multi-lane highway with vehicles, freeway traffic scene',
+            'construction': 'construction zone with orange cones, road work area with barriers'
+        }
+        
+        # Color + vehicle combinations
+        color_vehicle_combinations = {
+            'white car': 'white colored passenger car on road',
+            'black car': 'black colored passenger car on road', 
+            'red car': 'red colored passenger car on road',
+            'blue car': 'blue colored passenger car on road',
+            'white truck': 'white colored large truck vehicle',
+            'red truck': 'red colored large truck vehicle'
+        }
+        
+        # Check for exact matches
+        if query_lower in vehicle_enhancements:
+            return f"{query}, {vehicle_enhancements[query_lower]}"
+        
+        if query_lower in color_vehicle_combinations:
+            return f"{query}, {color_vehicle_combinations[query_lower]}"
+        
+        # Check for partial matches
+        for key, enhancement in vehicle_enhancements.items():
+            if key in query_lower:
+                return f"{query}, {enhancement}"
+                
+        # Check for color combinations
+        for key, enhancement in color_vehicle_combinations.items():
+            if key in query_lower:
+                return f"{query}, {enhancement}"
+        
+        # Default: return original query with general traffic context
+        return f"{query}, traffic scene on road"
+    
+    async def search_similar_frames(
+        self, 
+        db: Session, 
+        query_embedding: np.ndarray, 
+        user_id: int,
+        limit: int = 10,
+        similarity_threshold: float = 0.3,  # Lower for OpenAI embeddings
+        filters: Optional[dict] = None
+    ) -> dict:
+        """
+        Search for frames similar to query embedding using cosine similarity
+        """
+        try:
+            start_time = time.time()
+            
+            # Convert numpy array to list for pgvector
+            query_vector = query_embedding.tolist()
+            
+            # Build filter conditions
+            filter_conditions = [f"v.user_id = {user_id}"]
+            
+            if filters:
+                if filters.get("time_of_day"):
+                    filter_conditions.append(f"v.time_of_day = '{filters['time_of_day']}'")
+                
+                if filters.get("weather"):
+                    filter_conditions.append(f"v.weather = '{filters['weather']}'")
+                
+                if filters.get("category"):
+                    filter_conditions.append(f"v.video_metadata->>'camera_type' = '{filters['category']}'")
+            
+            # Construct WHERE clause
+            where_clause = ""
+            if filter_conditions:
+                where_clause = "WHERE " + " AND ".join(filter_conditions)
+            
+            # Use pgvector's cosine distance for similarity search with inline embeddings
+            raw_query = text(f"""
+                SELECT 
+                    f.id as frame_id,
+                    v.id as video_id,
+                    f.timestamp,
+                    1 - (f.embedding <=> CAST(:query_vector AS vector)) as similarity,
+                    f.frame_path,
+                    f.frame_metadata,
+                    v.original_filename as video_filename,
+                    v.duration as video_duration,
+                    f.description
+                FROM frames f
+                JOIN videos v ON f.video_id = v.id
+                {where_clause}
+                AND f.embedding IS NOT NULL
+                AND 1 - (f.embedding <=> CAST(:query_vector AS vector)) >= :similarity_threshold
+                ORDER BY f.embedding <=> CAST(:query_vector AS vector)
+                LIMIT :limit_results
+            """)
+            
+            # Execute the query
+            result = db.execute(raw_query, {
+                "query_vector": query_vector,
+                "similarity_threshold": similarity_threshold,
+                "limit_results": limit
+            })
+            
+            # Format results
+            similarities = []
+            for row in result:
+                similarities.append({
+                    "frame_id": row.frame_id,
+                    "video_id": row.video_id,
+                    "timestamp": row.timestamp,
+                    "similarity": float(row.similarity),
+                    "frame_path": row.frame_path,
+                    "metadata": row.frame_metadata or {},
+                    "video_filename": row.video_filename,
+                    "video_duration": row.video_duration
+                })
+            
+            search_time = int((time.time() - start_time) * 1000)
+            
+            return {
+                "results": similarities,
+                "total_found": len(similarities),
+                "search_time_ms": search_time
+            }
+            
+        except Exception as e:
+            raise Exception(f"Failed to search similar frames with OpenAI embeddings: {str(e)}")
+    
+    async def search_by_text(
+        self,
+        db: Session,
+        query_text: str,
+        user_id: int,
+        limit: int = 10,
+        similarity_threshold: float = 0.3,
+        filters: Optional[dict] = None
+    ) -> dict:
+        """
+        Search frames by natural language text query using OpenAI embeddings
+        """
+        try:
+            # Generate high-quality embedding for query text
+            query_embedding = await self.encode_text(query_text)
+            
+            # Search similar frames
+            search_results = await self.search_similar_frames(
+                db, query_embedding, user_id, limit, similarity_threshold, filters
+            )
+            
+            # Save search record
+            search_record = Search(
+                query_text=query_text,
+                query_type="openai_text",
+                query_embedding=query_embedding.tolist(),
+                limit_results=limit,
+                similarity_threshold=similarity_threshold,
+                filters=filters or {},
+                results_count=len(search_results["results"]),
+                response_time_ms=search_results["search_time_ms"]
+            )
+            db.add(search_record)
+            db.commit()
+            
+            return {
+                "search_id": search_record.id,
+                **search_results
+            }
+            
+        except Exception as e:
+            raise Exception(f"Failed to search by text with OpenAI: {str(e)}")
+    
+    async def search_by_image(
+        self,
+        db: Session,
+        image_path: str,
+        user_id: int,
+        limit: int = 10,
+        similarity_threshold: float = 0.3,
+        filters: Optional[dict] = None
+    ) -> dict:
+        """
+        Search frames by example image using OpenAI vision embeddings
+        """
+        try:
+            # Generate high-quality embedding for query image
+            query_embedding = await self.encode_image(image_path)
+            
+            # Search similar frames
+            search_results = await self.search_similar_frames(
+                db, query_embedding, user_id, limit, similarity_threshold, filters
+            )
+            
+            # Save search record  
+            search_record = Search(
+                query_text=f"OpenAI Image search: {os.path.basename(image_path)}",
+                query_type="openai_image",
+                query_embedding=query_embedding.tolist(),
+                limit_results=limit,
+                similarity_threshold=similarity_threshold,
+                filters=filters or {},
+                results_count=len(search_results["results"]),
+                response_time_ms=search_results["search_time_ms"]
+            )
+            db.add(search_record)
+            db.commit()
+            
+            return {
+                "search_id": search_record.id,
+                **search_results
+            }
+            
+        except Exception as e:
+            raise Exception(f"Failed to search by image with OpenAI: {str(e)}")

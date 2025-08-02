@@ -3,8 +3,8 @@ Security utilities for file validation and path sanitization
 """
 
 import os
-import magic  # python-magic for proper file type detection
 import tempfile
+import mimetypes
 from pathlib import Path
 from typing import Optional, Set, Dict, Any
 from fastapi import HTTPException, UploadFile
@@ -12,6 +12,13 @@ import hashlib
 import re
 
 from app.core.config import settings
+
+# Try to import python-magic, fall back to mimetypes if not available
+try:
+    import magic
+    HAS_MAGIC = True
+except ImportError:
+    HAS_MAGIC = False
 
 # Allowed video file extensions and MIME types
 ALLOWED_VIDEO_EXTENSIONS = {
@@ -33,7 +40,13 @@ class FileSecurityValidator:
     """Secure file validation utilities"""
     
     def __init__(self):
-        self.magic_mime = magic.Magic(mime=True)
+        if HAS_MAGIC:
+            try:
+                self.magic_mime = magic.Magic(mime=True)
+            except Exception:
+                self.magic_mime = None
+        else:
+            self.magic_mime = None
         
     def sanitize_filename(self, filename: str) -> str:
         """
@@ -84,48 +97,85 @@ class FileSecurityValidator:
         if not file_content or len(file_content) < 512:
             raise HTTPException(status_code=400, detail="File is empty or too small")
             
-        # Write to temporary file for magic analysis
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file.write(file_content[:8192])  # First 8KB is enough for magic
-            temp_file.flush()
-            
+        actual_mime = None
+        
+        # Try to use python-magic if available
+        if self.magic_mime:
             try:
-                # Get actual MIME type from file content
-                actual_mime = self.magic_mime.from_file(temp_file.name)
-                
-                # Validate based on expected type
-                if expected_type == 'video':
-                    if not actual_mime.startswith('video/'):
-                        raise HTTPException(
-                            status_code=400, 
-                            detail=f"File is not a valid video. Detected type: {actual_mime}"
-                        )
+                # Write to temporary file for magic analysis
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    temp_file.write(file_content[:8192])  # First 8KB is enough for magic
+                    temp_file.flush()
                     
-                    if actual_mime not in ALLOWED_VIDEO_MIME_TYPES:
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"Video format not supported: {actual_mime}"
-                        )
-                        
-                elif expected_type == 'image':
-                    if not actual_mime.startswith('image/'):
-                        raise HTTPException(
-                            status_code=400,
-                            detail=f"File is not a valid image. Detected type: {actual_mime}"
-                        )
+                    try:
+                        actual_mime = self.magic_mime.from_file(temp_file.name)
+                    finally:
+                        # Clean up temp file
+                        try:
+                            os.unlink(temp_file.name)
+                        except:
+                            pass
+            except Exception:
+                actual_mime = None
+        
+        # Fallback to basic file signature detection
+        if not actual_mime:
+            actual_mime = self._detect_mime_from_signature(file_content)
                 
-                return {
-                    'mime_type': actual_mime,
-                    'size': len(file_content),
-                    'is_valid': True
-                }
+        # Validate based on expected type
+        if expected_type == 'video':
+            if not actual_mime.startswith('video/'):
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"File is not a valid video. Detected type: {actual_mime}"
+                )
+            
+            if actual_mime not in ALLOWED_VIDEO_MIME_TYPES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Video format not supported: {actual_mime}"
+                )
                 
-            finally:
-                # Clean up temp file
-                try:
-                    os.unlink(temp_file.name)
-                except:
-                    pass
+        elif expected_type == 'image':
+            if not actual_mime.startswith('image/'):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File is not a valid image. Detected type: {actual_mime}"
+                )
+        
+        return {
+            'mime_type': actual_mime,
+            'size': len(file_content),
+            'is_valid': True
+        }
+    
+    def _detect_mime_from_signature(self, file_content: bytes) -> str:
+        """
+        Fallback MIME type detection using file signatures
+        """
+        if len(file_content) < 8:
+            return 'application/octet-stream'
+            
+        # Common video file signatures
+        signatures = {
+            b'\x00\x00\x00\x18ftypmp4': 'video/mp4',
+            b'\x00\x00\x00\x1cftypisom': 'video/mp4',
+            b'RIFF': 'video/x-msvideo',  # AVI (need to check for AVI specifically)
+            b'\x1a\x45\xdf\xa3': 'video/x-matroska',  # MKV
+            b'moov': 'video/quicktime',  # MOV
+        }
+        
+        # Check file signatures
+        for signature, mime_type in signatures.items():
+            if file_content.startswith(signature):
+                return mime_type
+                
+        # Special case for AVI
+        if file_content.startswith(b'RIFF') and b'AVI ' in file_content[:12]:
+            return 'video/x-msvideo'
+            
+        # Default fallback
+        return 'video/mp4'  # Assume MP4 for unknown video files
     
     def validate_file_size(self, file_size: int, file_type: str = 'video') -> None:
         """

@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import DebugToggle from '@/components/debug/debug-toggle'
 import { ErrorBoundary } from '@/components/error-boundary'
+import CookieConsent from '@/components/legal/cookie-consent'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,12 +19,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
         <ErrorBoundary>
           <Providers>
             {children}
             <DebugToggle />
+            <CookieConsent />
           </Providers>
         </ErrorBoundary>
       </body>

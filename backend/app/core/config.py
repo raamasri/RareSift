@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     
     # AI/ML
     clip_model_name: str = "ViT-B/32"
-    embedding_dim: int = 512
+    embedding_dim: int = 1536
     frame_extraction_interval: int = 1  # seconds (used for legacy mode)
     
     # Frame extraction configuration

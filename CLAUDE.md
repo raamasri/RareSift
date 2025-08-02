@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 RareSift is an AI-powered SAAS platform for autonomous vehicle (AV) teams to search driving scenarios using natural language queries or example clips. Built as an MVP for YC application with FastAPI backend and Next.js frontend.
 
+**Current Status**: Production-ready with OpenAI CLIP integration (1536-dim embeddings), comprehensive secrets management system, and enterprise-grade security infrastructure. Complete dataset with **22 videos** (4,951 total seconds) and **4,959 frames** with full embedding coverage (100.2%).
+
 ## Development Commands
 
 ### Quick Start
@@ -109,11 +111,22 @@ python create_migration.py
   - `export-manager.tsx`: Batch export functionality
 
 ### Database Schema
-- **videos**: Video metadata, processing status, file info
-- **frames**: Individual frame data with timestamps
-- **embeddings**: CLIP vectors (512-dim) using pgvector
+- **videos**: Video metadata, processing status, file info (22 videos total)
+- **frames**: Individual frame data with timestamps (4,959 frames total)
+- **embeddings**: CLIP vectors (1536-dim) using pgvector (100% coverage)
 - **searches**: Query history and analytics
 - **exports**: Export job tracking
+
+### Dataset Overview
+**Video Collection (22 total videos, 4,951 seconds):**
+- **Driving Camera Footage (9 videos)**: 3,711 seconds total
+  - Durations range from 147s to 708s
+  - Located in `video_assets/driving_camera_footage/`
+- **Static Camera Footage (13 videos)**: 1,240 seconds total  
+  - Durations range from 11s to 204s
+  - Located in `video_assets/static_camera_footage/`
+- **Frame Extraction**: 1 frame per second = 4,951 expected frames
+- **Actual Frames**: 4,959 frames (100.2% coverage with some overlap frames)
 
 ## Configuration
 

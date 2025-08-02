@@ -17,13 +17,14 @@ from fastapi import APIRouter
 api_router = APIRouter()
 
 # Import and include individual routers
-from app.api.v1 import videos, search, export, auth, contact, monitoring
+from app.api.v1 import videos, search, export, auth, contact, monitoring, gdpr
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(videos.router, prefix="/videos", tags=["videos"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])  
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(contact.router, prefix="/contact", tags=["contact"])
 api_router.include_router(monitoring.router, prefix="/monitoring", tags=["monitoring"])
+api_router.include_router(gdpr.router, prefix="/gdpr", tags=["gdpr", "privacy"])
 from app.core.config_secure import get_settings
 settings = get_settings()
 from app.core.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
