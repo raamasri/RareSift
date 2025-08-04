@@ -148,7 +148,7 @@ export function getVideoSourceUrl(videoId: number, config: DeploymentConfig): {
   const backendPath = `${config.backendUrl}/api/v1/videos/${videoId}/stream`
   
   // GitHub LFS URL for production deployment
-  const githubLfsPath = `https://github.com/ramasrivatsan/RareSift/raw/main/frontend/public/videos/${video.folder}/${video.filename}`
+  const githubLfsPath = `https://github.com/raamasri/RareSift/raw/main/frontend/public/videos/${video.folder}/${video.filename}`
 
   if (config.isLocal) {
     // Local development: Public files preferred, backend as fallback if available
