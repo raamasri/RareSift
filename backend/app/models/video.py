@@ -74,7 +74,7 @@ class Embedding(Base):
     frame_id = Column(Integer, ForeignKey("frames.id"), nullable=False)
     
     # Vector embedding (using pgvector)
-    embedding = Column(Vector(512), nullable=False)  # CLIP embedding dimension
+    embedding = Column(Vector(1536), nullable=False)  # OpenAI embedding dimension
     model_name = Column(String, nullable=False, default="ViT-B/32")
     
     # Timestamps
@@ -91,8 +91,8 @@ class Search(Base):
     query_text = Column(Text, nullable=True)  # Natural language query
     query_type = Column(String, nullable=False)  # "text" or "clip"
     
-    # Query embedding for similarity search
-    query_embedding = Column(Vector(512), nullable=True)
+    # Query embedding for similarity search (1536-dim for OpenAI)
+    query_embedding = Column(Vector(1536), nullable=True)
     
     # Search parameters
     limit_results = Column(Integer, default=10)

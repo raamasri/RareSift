@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import { PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline'
-import { getSafeApiUrl } from '../../utils/security'
+import { detectEnvironment, checkBackendHealth, getVideoSourceUrl, type DeploymentConfig } from '../../utils/environment'
 
 interface VideoPlayerProps {
   videoId: number
@@ -13,31 +13,15 @@ interface VideoPlayerProps {
   showControls?: boolean
 }
 
-// Map video IDs to actual video filenames based on our LOCAL_VIDEOS data
+// Get video filename from video ID
 const getVideoFilename = (videoId: number): string => {
   const videoMap: { [key: number]: string } = {
-    1: 'GH010001.MP4',
-    2: 'GH010002.MP4', 
-    3: 'GH010003.MP4',
-    4: 'GH010004.MP4',
-    5: 'GH010005.MP4',
-    6: 'GH010006.MP4',
-    7: 'GH010007.MP4',
-    8: 'GH010010.MP4',
-    9: 'GH020010.MP4',
-    10: 'GH010031.MP4',
-    11: 'GH010032.MP4',
-    12: 'GH010033.MP4',
-    13: 'GH010034.MP4',
-    14: 'GH010035.MP4',
-    15: 'GH010036.MP4',
-    16: 'GH010037.MP4',
-    17: 'GH010038.MP4',
-    18: 'GH010039.MP4',
-    19: 'GH010041.MP4',
-    20: 'GH010042.MP4',
-    21: 'GH010043.MP4',
-    22: 'GH010045.MP4'
+    1: 'GH010001.MP4', 2: 'GH010002.MP4', 3: 'GH010003.MP4', 4: 'GH010004.MP4',
+    5: 'GH010005.MP4', 6: 'GH010006.MP4', 7: 'GH010007.MP4', 8: 'GH010010.MP4',
+    9: 'GH020010.MP4', 10: 'GH010031.MP4', 11: 'GH010032.MP4', 12: 'GH010033.MP4',
+    13: 'GH010034.MP4', 14: 'GH010035.MP4', 15: 'GH010036.MP4', 16: 'GH010037.MP4',
+    17: 'GH010038.MP4', 18: 'GH010039.MP4', 19: 'GH010041.MP4', 20: 'GH010042.MP4',
+    21: 'GH010043.MP4', 22: 'GH010045.MP4'
   }
   return videoMap[videoId] || `VIDEO_${videoId}.MP4`
 }
@@ -56,14 +40,46 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [videoSrc, setVideoSrc] = useState<string>('')
+  const [backendChecked, setBackendChecked] = useState(false)
+  const [deploymentConfig, setDeploymentConfig] = useState<DeploymentConfig | null>(null)
 
   const videoFilename = getVideoFilename(videoId)
-  // Use backend streaming endpoint for actual video playback
-  const videoSrc = getSafeApiUrl(`/api/v1/videos/${videoId}/stream`)
+
+  // Initialize deployment configuration and video source
+  useEffect(() => {
+    const initializeVideoSource = async () => {
+      const config = detectEnvironment()
+      setDeploymentConfig(config)
+      
+      const videoSource = getVideoSourceUrl(videoId, config)
+      
+      if (videoSource.strategy === 'backend' || videoSource.strategy === 'hybrid') {
+        // Check backend availability before using backend source
+        const backendAvailable = await checkBackendHealth(config.backendUrl, 3000)
+        
+        if (backendAvailable) {
+          setVideoSrc(videoSource.primary)
+          console.log(`Using ${videoSource.strategy} strategy: primary source (backend)`)
+        } else {
+          setVideoSrc(videoSource.fallback)
+          console.log(`Backend unavailable, using fallback: ${videoSource.fallback}`)
+        }
+      } else {
+        // Use public files directly
+        setVideoSrc(videoSource.primary)
+        console.log(`Using ${videoSource.strategy} strategy: ${videoSource.primary}`)
+      }
+      
+      setBackendChecked(true)
+    }
+    
+    initializeVideoSource()
+  }, [videoId])
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !videoSrc || !backendChecked) return
 
     const handleLoadedData = () => {
       setIsLoading(false)
@@ -85,7 +101,17 @@ export default function VideoPlayer({
       setError(null)
     }
 
-    const handleError = () => {
+    const handleError = async () => {
+      // Try fallback if primary source fails
+      if (deploymentConfig) {
+        const videoSource = getVideoSourceUrl(videoId, deploymentConfig)
+        if (videoSrc === videoSource.primary && videoSource.primary !== videoSource.fallback) {
+          console.warn('Primary video source failed, trying fallback:', videoSource.fallback)
+          setVideoSrc(videoSource.fallback)
+          return
+        }
+      }
+      
       setIsLoading(false)
       setError('Failed to load video file')
     }
@@ -112,7 +138,7 @@ export default function VideoPlayer({
       video.removeEventListener('play', handlePlay)
       video.removeEventListener('pause', handlePause)
     }
-  }, [startTime, autoPlay])
+  }, [startTime, autoPlay, videoSrc, backendChecked, videoId, deploymentConfig])
 
   const togglePlay = () => {
     const video = videoRef.current
@@ -179,13 +205,15 @@ export default function VideoPlayer({
         </div>
       ) : (
         <>
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            className="w-full h-full object-contain"
-            playsInline
-            crossOrigin="anonymous"
-          />
+          {videoSrc && (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              className="w-full h-full object-contain"
+              playsInline
+              crossOrigin="anonymous"
+            />
+          )}
           
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">

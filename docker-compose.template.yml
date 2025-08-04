@@ -1,6 +1,7 @@
 # DEVELOPMENT ONLY - DO NOT USE IN PRODUCTION
 # This file contains default credentials for development
 # For production, use docker-compose.prod.yml with proper environment variables
+# Copy this to docker-compose.yml and add your API keys
 
 services:
   postgres:
@@ -36,6 +37,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=dev-secret-key-change-in-production
       - ENVIRONMENT=development
+      # - OPENAI_API_KEY=your-openai-api-key-here
     depends_on:
       - postgres
       - redis
@@ -51,6 +53,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=dev-secret-key-change-in-production
       - ENVIRONMENT=development
+      # - OPENAI_API_KEY=your-openai-api-key-here
     depends_on:
       - postgres
       - redis

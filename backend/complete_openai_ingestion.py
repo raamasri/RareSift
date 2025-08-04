@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, text
 from app.core.database import get_db
 from app.core.config import settings
 from app.models.video import Video, Frame, Embedding
-from app.services.simple_openai_embedding_service import SimpleOpenAIEmbeddingService
+from app.services.openai_embedding_service import OpenAIEmbeddingService
 import numpy as np
 
 # Configure logging
@@ -35,7 +35,7 @@ class CompleteOpenAIIngestion:
     """Complete re-ingestion of all embeddings using OpenAI for maximum accuracy"""
     
     def __init__(self):
-        self.embedding_service = SimpleOpenAIEmbeddingService()
+        self.embedding_service = OpenAIEmbeddingService()
         
         # Create database engine
         engine = create_engine(settings.database_url)

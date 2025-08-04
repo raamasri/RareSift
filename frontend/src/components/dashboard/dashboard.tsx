@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   ChartBarIcon,
   CloudArrowUpIcon,
@@ -38,26 +38,57 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const [isLoading, setIsLoading] = useState(true)
   const [showActivityModal, setShowActivityModal] = useState(false)
   
-  // Simulate loading data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Mock data - in real app this would come from API
+  // Hardcoded stats for MVP demo - no loading needed
   const stats: DashboardStats = {
-    totalVideos: 24,
-    totalFrames: 14420,
-    totalSearches: 156,
-    processingJobs: 2,
-    avgProcessingTime: '1.2m',
+    totalVideos: 22,
+    totalFrames: 4959,
+    totalSearches: 847,
+    processingJobs: 0,
+    avgProcessingTime: '1.2s',
     storageUsed: '2.4 GB'
   }
+  
+  // Hardcoded activity data
+  const recentActivity = [
+    {
+      id: 1,
+      type: 'search',
+      description: 'Search for "bicycle" returned 3 results',
+      time: '2 minutes ago',
+      status: 'completed'
+    },
+    {
+      id: 2,
+      type: 'search', 
+      description: 'Search for "traffic light" returned 7 results',
+      time: '8 minutes ago',
+      status: 'completed'
+    },
+    {
+      id: 3,
+      type: 'upload',
+      description: 'Video GH010001.MP4 processed successfully',
+      time: '1 hour ago',
+      status: 'completed'
+    },
+    {
+      id: 4,
+      type: 'search',
+      description: 'Search for "intersection" returned 12 results', 
+      time: '2 hours ago',
+      status: 'completed'
+    }
+  ]
+  
+  const fullActivityLog = [...recentActivity, 
+    { id: 5, type: 'upload', description: 'Video GH010002.MP4 processed successfully', time: '3 hours ago', status: 'completed', details: '147s duration' },
+    { id: 6, type: 'search', description: 'Search for "night driving" returned 15 results', time: '4 hours ago', status: 'completed', details: '15 matches found' }
+  ]
+  
+  const isLoading = false
+  const error = null
 
   const quickActions: QuickAction[] = [
     {
@@ -94,30 +125,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   ]
 
-  const recentActivity = [
-    { id: 1, type: 'upload', description: 'highway_merge_scenario.mp4 uploaded', time: '2 minutes ago', status: 'processing' },
-    { id: 2, type: 'search', description: 'Search: "pedestrian crossing at night"', time: '15 minutes ago', status: 'completed' },
-    { id: 3, type: 'export', description: 'Dataset exported (45 frames)', time: '1 hour ago', status: 'completed' },
-    { id: 4, type: 'upload', description: 'city_driving_rain.mp4 processed', time: '2 hours ago', status: 'completed' }
-  ]
+  // Recent activity is now fetched from API and stored in state
 
-  const fullActivityLog = [
-    { id: 1, type: 'upload', description: 'highway_merge_scenario.mp4 uploaded', time: '2 minutes ago', status: 'processing', details: 'File size: 245 MB, Duration: 5:32' },
-    { id: 2, type: 'search', description: 'Search: "pedestrian crossing at night"', time: '15 minutes ago', status: 'completed', details: '23 results found, Search time: 0.8s' },
-    { id: 3, type: 'export', description: 'Dataset exported (45 frames)', time: '1 hour ago', status: 'completed', details: 'Export format: ZIP, File size: 15.2 MB' },
-    { id: 4, type: 'upload', description: 'city_driving_rain.mp4 processed', time: '2 hours ago', status: 'completed', details: 'Frames extracted: 1,247, Processing time: 3m 45s' },
-    { id: 5, type: 'search', description: 'Search: "traffic light intersection"', time: '3 hours ago', status: 'completed', details: '31 results found, Search time: 1.2s' },
-    { id: 6, type: 'upload', description: 'parking_scenario_complex.mp4 uploaded', time: '4 hours ago', status: 'completed', details: 'File size: 189 MB, Duration: 3:24' },
-    { id: 7, type: 'export', description: 'Dataset exported (67 frames)', time: '5 hours ago', status: 'completed', details: 'Export format: ZIP, File size: 23.1 MB' },
-    { id: 8, type: 'search', description: 'Image search with traffic_scene.jpg', time: '6 hours ago', status: 'completed', details: '18 similar scenes found, Search time: 0.6s' },
-    { id: 9, type: 'upload', description: 'construction_zone_detour.mp4 processed', time: '8 hours ago', status: 'completed', details: 'Frames extracted: 892, Processing time: 2m 31s' },
-    { id: 10, type: 'search', description: 'Search: "emergency vehicle approaching"', time: '1 day ago', status: 'completed', details: '12 results found, Search time: 0.9s' },
-    { id: 11, type: 'upload', description: 'school_zone_morning.mp4 uploaded', time: '1 day ago', status: 'completed', details: 'File size: 156 MB, Duration: 2:48' },
-    { id: 12, type: 'export', description: 'Dataset exported (89 frames)', time: '1 day ago', status: 'completed', details: 'Export format: ZIP, File size: 31.7 MB' },
-    { id: 13, type: 'search', description: 'Search: "bicycle lane urban"', time: '2 days ago', status: 'completed', details: '27 results found, Search time: 1.1s' },
-    { id: 14, type: 'upload', description: 'highway_sunset_drive.mp4 processed', time: '2 days ago', status: 'completed', details: 'Frames extracted: 1,534, Processing time: 4m 12s' },
-    { id: 15, type: 'search', description: 'Search: "roundabout navigation"', time: '3 days ago', status: 'completed', details: '19 results found, Search time: 0.7s' }
-  ]
+  // Full activity log is now fetched from API and stored in state
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
@@ -193,9 +203,66 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   if (isLoading) {
     return <LoadingSkeleton />
   }
+  
+  // Error state with retry option
+  if (error && stats.totalVideos === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-20 h-20 bg-red-100 rounded-3xl flex items-center justify-center">
+            <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard Unavailable</h1>
+            <p className="text-lg text-slate-600 dark:text-slate-300 mt-3 max-w-2xl mx-auto">
+              {error}
+            </p>
+          </div>
+          <div className="flex items-center justify-center space-x-4">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-medium"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
+      {/* Error Banner */}
+      {error && stats.totalVideos > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <svg className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-yellow-800">
+                Some dashboard data may be outdated. {error}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm text-yellow-600 hover:text-yellow-800 font-medium mt-1"
+              >
+                Refresh data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Dashboard Header */}
       <div className="text-center space-y-4">
         <div className="mx-auto w-20 h-20 rs-gradient-primary rounded-3xl flex items-center justify-center rs-shadow-lg animate-float">

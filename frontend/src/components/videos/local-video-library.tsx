@@ -50,25 +50,44 @@ export function LocalVideoLibrary() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch videos from API
+  // Use static local video data instead of API calls
   useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        setLoading(true)
-        // Import the API functions dynamically to avoid circular dependencies
-        const { videoApi } = await import('@/lib/api')
-        const data = await videoApi.list()
-        setVideos(data)
-        setError(null)
-      } catch (err) {
-        console.error('Failed to fetch videos:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load videos')
-      } finally {
-        setLoading(false)
-      }
+    const loadLocalVideos = () => {
+      setLoading(true)
+      
+      // Static video data for local demo mode
+      const localVideos: Video[] = [
+        { id: 1, original_filename: 'GH010001.MP4', duration: 507, width: 1920, height: 1080, fps: 30, file_size: 2872187705, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 2, original_filename: 'GH010002.MP4', duration: 147, width: 1920, height: 1080, fps: 30, file_size: 829765120, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 3, original_filename: 'GH010003.MP4', duration: 425, width: 1920, height: 1080, fps: 30, file_size: 2401234560, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 4, original_filename: 'GH010004.MP4', duration: 361, width: 1920, height: 1080, fps: 30, file_size: 2039382016, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 5, original_filename: 'GH010005.MP4', duration: 335, width: 1920, height: 1080, fps: 30, file_size: 1893478400, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 6, original_filename: 'GH010006.MP4', duration: 494, width: 1920, height: 1080, fps: 30, file_size: 2791587840, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 7, original_filename: 'GH010007.MP4', duration: 383, width: 1920, height: 1080, fps: 30, file_size: 2163712000, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 8, original_filename: 'GH010010.MP4', duration: 708, width: 1920, height: 1080, fps: 30, file_size: 4001792000, time_of_day: 'day', weather: 'cloudy', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 9, original_filename: 'GH020010.MP4', duration: 351, width: 1920, height: 1080, fps: 30, file_size: 1983528960, time_of_day: 'day', weather: 'rainy', video_metadata: { camera_type: 'driving_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 10, original_filename: 'GH010031.MP4', duration: 11, width: 1920, height: 1080, fps: 30, file_size: 62177280, time_of_day: 'dusk', weather: 'foggy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 11, original_filename: 'GH010032.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'night', weather: 'clear', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 12, original_filename: 'GH010033.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'night', weather: 'clear', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 13, original_filename: 'GH010034.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 14, original_filename: 'GH010035.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 15, original_filename: 'GH010036.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 16, original_filename: 'GH010037.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 17, original_filename: 'GH010038.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 18, original_filename: 'GH010039.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'partly_cloudy', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 19, original_filename: 'GH010041.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 20, original_filename: 'GH010042.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 21, original_filename: 'GH010043.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined },
+        { id: 22, original_filename: 'GH010045.MP4', duration: 87, width: 1920, height: 1080, fps: 30, file_size: 491876352, time_of_day: 'day', weather: 'sunny', video_metadata: { camera_type: 'static_camera' }, is_processed: true, processing_started_at: undefined, processing_completed_at: undefined }
+      ]
+      
+      setVideos(localVideos)
+      setError(null)
+      setLoading(false)
     }
 
-    fetchVideos()
+    // Simulate brief loading for UX
+    setTimeout(loadLocalVideos, 500)
   }, [])
 
   // Helper function to determine category from filename and metadata

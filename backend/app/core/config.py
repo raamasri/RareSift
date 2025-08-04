@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     # OpenAI (optional)
     openai_api_key: Optional[str] = None
     
+    # OpenAI Rate Limiting
+    openai_rpm_limit: int = 3500  # Requests per minute (default for most tiers)
+    openai_tpm_limit: int = 200000  # Tokens per minute
+    openai_concurrent_limit: int = 100  # Max concurrent requests
+    openai_daily_cost_limit: float = 50.0  # Daily cost limit in USD
+    
     # Production security settings
     cors_origins: list[str] = []
     allowed_hosts: list[str] = []

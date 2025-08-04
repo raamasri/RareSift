@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { MagnifyingGlassIcon, PhotoIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
+import { detectEnvironment, checkBackendHealth } from '../../utils/environment'
 import clsx from 'clsx'
 
 interface SearchResult {
@@ -11,7 +12,7 @@ interface SearchResult {
   timestamp: number
   similarity: number
   frame_path: string
-  frame_url?: string
+  frame_url: string
   metadata: {
     [key: string]: any
   }
@@ -20,16 +21,14 @@ interface SearchResult {
 }
 
 interface SearchResponse {
-  search_id: number
   results: SearchResult[]
-  total_found: number | string
+  total_found: number
   search_time_ms: number
-  query_text?: string
-  filters: { [key: string]: any }
 }
 
 interface APISearchInterfaceProps {
   onSearchResults?: (results: SearchResponse) => void
+  onSearchStart?: () => void
 }
 
 interface SearchFilters {
@@ -40,7 +39,7 @@ interface SearchFilters {
   limit: number
 }
 
-export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps) {
+export function APISearchInterface({ onSearchResults, onSearchStart }: APISearchInterfaceProps) {
   const [searchType, setSearchType] = useState<'text' | 'image'>('text')
   const [query, setQuery] = useState('')
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -49,36 +48,48 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
   const [suggestedQueries, setSuggestedQueries] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [backendAvailable, setBackendAvailable] = useState(true)
   const [filters, setFilters] = useState<SearchFilters>({
     similarity_threshold: 0.2,
     limit: 10
   })
 
-  // Smart search suggestions for AV scenarios
+  // Check backend availability
+  useEffect(() => {
+    const checkBackend = async () => {
+      const config = detectEnvironment()
+      const available = await checkBackendHealth(config.backendUrl)
+      setBackendAvailable(available)
+    }
+    
+    checkBackend()
+  }, [])
+
+
+  // Smart search suggestions based on actual video content
   const commonScenarios = [
-    // Driving scenarios
-    "highway driving with cars",
-    "road with lane markings", 
-    "vehicles on highway",
-    "driving perspective view",
-    "cars in traffic",
-    "highway with multiple lanes",
+    // Driving scenarios (based on 9 driving videos)
+    "highway driving",
+    "cars on highway",
+    "driving perspective", 
+    "vehicles ahead",
+    "lane markings",
+    "highway traffic",
     
-    // Intersection scenarios
-    "intersection with traffic lights",
-    "cars at intersection",
-    "intersection monitoring view",
-    "traffic light controls",
-    "intersection from above",
-    "static camera intersection view",
+    // Intersection scenarios (based on 13 static videos)
+    "intersection view",
+    "traffic monitoring",
+    "static camera footage",
+    "intersection traffic",
+    "vehicles at intersection",
     
-    // General scenarios
-    "sunny day driving",
-    "clear weather conditions",
-    "daytime driving footage",
-    "good visibility driving",
-    "normal traffic flow",
-    "standard road conditions"
+    // Weather/conditions (from actual metadata)
+    "sunny day",
+    "cloudy conditions",
+    "clear weather",
+    "daytime footage",
+    "good visibility"
   ]
 
   const getSmartSuggestions = (input: string) => {
@@ -126,8 +137,15 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
   const handleTextSearch = async () => {
     if (!query.trim()) return
     
+    await handleDatabaseTextSearch()
+  }
+
+  const handleDatabaseTextSearch = async () => {
+    if (!query.trim()) return
+    
     setIsLoading(true)
     setError(null)
+    onSearchStart?.()
     
     try {
       const searchPayload = {
@@ -141,30 +159,61 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
         }
       }
 
-      // For demo purposes, use localhost backend
-      const response = await fetch('/api/v1/search/text', {
+      const config = detectEnvironment()
+      // No authentication required for MVP
+
+      const response = await fetch(`${config.backendUrl}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
-        body: JSON.stringify(searchPayload)
+        body: JSON.stringify(searchPayload),
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       })
       
       if (!response.ok) {
-        // If API fails, fall back to local search
-        console.warn('API search failed, falling back to local search')
-        await handleLocalTextSearch()
+        const errorText = await response.text().catch(() => 'Unknown error')
+        
+        if (response.status === 401) {
+          setError('Authentication required. Please refresh the page and try again.')
+        } else if (response.status === 429) {
+          setError('Too many requests. Please wait a moment and try again.')
+        } else if (response.status === 500) {
+          setError('Server error occurred. Our team has been notified. Please try again in a few minutes.')
+        } else if (response.status >= 500) {
+          setError('Service temporarily unavailable. Please try again in a few minutes.')
+        } else {
+          setError(`Search failed: ${response.status === 404 ? 'Service not found' : errorText}`)
+        }
         return
       }
       
       const searchResults: SearchResponse = await response.json()
+      console.log('🔍 Database search completed:', {
+        query: query.trim(),
+        results_received: searchResults.total_found,
+        first_frame: searchResults.results[0]?.frame_id
+      })
       onSearchResults?.(searchResults)
       
-    } catch (error) {
-      console.error('Search failed:', error)
-      setError('Search failed. Please try again.')
-      // Fall back to local search
-      await handleLocalTextSearch()
+    } catch (error: any) {
+      console.error('Database search failed:', error)
+      
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        setError('Search request timed out. The AI service may be busy. Please try again.')
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setError('Unable to connect to the search service. Please check your internet connection and try again.')
+      } else if (error.message?.includes('NetworkError') || error.message?.includes('Failed to fetch')) {
+        setError('Network connection error. Please check your internet connection and try again.')
+      } else {
+        setError('An unexpected error occurred while searching. Please try again or contact support if the problem persists.')
+      }
+      
+      // Track retry attempts
+      setRetryCount(prev => prev + 1)
     } finally {
       setIsLoading(false)
     }
@@ -172,6 +221,8 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
 
   const handleLocalTextSearch = async () => {
     // Fallback to local search with mock results using actual demo frames
+    setIsLoading(true)
+    onSearchStart?.()
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400))
     
     const mockResults: SearchResponse = {
@@ -245,9 +296,16 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
     }
     
     onSearchResults?.(mockResults)
+    setIsLoading(false)
   }
 
   const handleImageSearch = async () => {
+    if (!selectedImage) return
+
+    await handleDatabaseImageSearch()
+  }
+
+  const handleDatabaseImageSearch = async () => {
     if (!selectedImage) return
 
     setIsLoading(true)
@@ -263,59 +321,43 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
       if (filters.weather) formData.append('weather', filters.weather)
       if (filters.category) formData.append('category', filters.category)
 
-      const response = await fetch('/api/v1/search/image', {
+      const config = detectEnvironment()
+      // No authentication required for MVP
+
+      const response = await fetch(`${config.backendUrl}/search`, {
         method: 'POST',
         body: formData
       })
       
       if (!response.ok) {
-        console.warn('API image search failed, falling back to local search')
-        await handleLocalImageSearch()
+        if (response.status === 401) {
+          setError('Authentication expired - please refresh the page')
+        } else {
+          setError(`Database image search failed: ${response.statusText}`)
+        }
         return
       }
       
       const searchResults: SearchResponse = await response.json()
       onSearchResults?.(searchResults)
       
-    } catch (error) {
-      console.error('Image search failed:', error)
-      setError('Image search failed. Please try again.')
-      await handleLocalImageSearch()
+    } catch (error: any) {
+      console.error('Database image search failed:', error)
+      
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        setError('Image search timed out. Please try with a smaller image or try again later.')
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setError('Unable to connect to the search service. Please check your internet connection.')
+      } else if (error.message?.includes('NetworkError') || error.message?.includes('Failed to fetch')) {
+        setError('Network connection error. Please check your internet connection and try again.')
+      } else {
+        setError('Image search failed. Please try again or use a different image.')
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleLocalImageSearch = async () => {
-    // Fallback local image search
-    await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 600))
-    
-    const mockResults: SearchResponse = {
-      search_id: Math.floor(Math.random() * 1000),
-      results: [
-        {
-          frame_id: 2,
-          video_id: 1,
-          timestamp: 120,
-          similarity: 0.78,
-          frame_path: '/api/frames/2/thumbnail',
-          metadata: {
-            weather: 'sunny',
-            time_of_day: 'day',
-            location: 'Highway driving'
-          },
-          video_filename: 'GH010001.MP4',
-          video_duration: 600
-        }
-      ],
-      total_found: 1,
-      search_time_ms: Math.round(80 + Math.random() * 200),
-      query_text: `Image search: ${selectedImage?.name}`,
-      filters: {}
-    }
-    
-    onSearchResults?.(mockResults)
-  }
 
   const onImageDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
@@ -346,6 +388,15 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
 
   return (
     <div className="space-y-8">
+      {/* Search Status */}
+      {!backendAvailable && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">
+            ⚠️ Backend unavailable. Please ensure the backend server is running.
+          </p>
+        </div>
+      )}
+
       {/* Professional Page Header */}
       <div className="text-center space-y-4">
         <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg animate-float">
@@ -359,21 +410,57 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
         </div>
         <div className="flex items-center justify-center space-x-6 text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-            <span>Live API</span>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span>Backend API</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span>Database Search</span>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span>OpenAI Embeddings</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <span>4,985 Frames Indexed</span>
+            <span>4,959 Real Frames</span>
           </div>
         </div>
         {error && (
-          <div className="mx-auto max-w-md p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800">⚠️ API unavailable - using fallback search</p>
+          <div className="mx-auto max-w-2xl p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">Search Error</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                {retryCount > 0 && (
+                  <p className="text-xs text-red-600 mt-2">Retry attempt: {retryCount}</p>
+                )}
+                <div className="mt-3 flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setError(null)
+                      setRetryCount(0)
+                      if (query.trim()) {
+                        handleTextSearch()
+                      }
+                    }}
+                    className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-md transition-colors"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => {
+                      setError(null)
+                      setRetryCount(0)
+                    }}
+                    className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -476,10 +563,10 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    "Pedestrian at night",
-                    "Freeway cut-ins", 
-                    "Left turns in rain",
-                    "Work zones"
+                    "Cars on highway",
+                    "Traffic intersection", 
+                    "Driving view",
+                    "Sunny day driving"
                   ].map((chip) => (
                     <button
                       key={chip}
@@ -692,11 +779,11 @@ export function APISearchInterface({ onSearchResults }: APISearchInterfaceProps)
                 }
               </div>
               <div className="flex items-center space-x-4 text-xs text-slate-400 dark:text-slate-500">
-                <span>Database Search</span>
+                <span>Backend Database</span>
                 <span>•</span>
-                <span>4,985 frames indexed</span>
+                <span>4,959 frames indexed</span>
                 <span>•</span>
-                <span>CLIP embeddings</span>
+                <span>OpenAI embeddings</span>
               </div>
             </div>
             

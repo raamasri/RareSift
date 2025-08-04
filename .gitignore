@@ -71,6 +71,14 @@ venv.bak/
 .env.test.local
 .env.production.local
 
+# Development environment files with secrets (keep templates only)
+.env.development
+.env.production
+
+# Docker compose files with secrets (keep templates only)
+docker-compose.yml
+docker-compose.override.yml
+
 # Spyder project settings
 .spyderproject
 .spyproject

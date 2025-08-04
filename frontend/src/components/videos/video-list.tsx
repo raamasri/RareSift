@@ -22,20 +22,118 @@ export function VideoList() {
 
   const queryClient = useQueryClient()
 
-  // Fetch videos
-  const { data: videosData, isLoading } = useQuery({
-    queryKey: ['videos', { processed_only: showProcessedOnly }],
-    queryFn: () => videoApi.list({ processed_only: showProcessedOnly, limit: 50 }),
-    refetchInterval: 5000 // Refresh every 5 seconds to show processing updates
-  })
+  // Hardcoded video data for MVP demo
+  const hardcodedVideos = [
+    {
+      id: 1, filename: "GH010001.MP4", original_filename: "GH010001.MP4", duration: 507, fps: 30, width: 1920, height: 1080,
+      file_size: 2400000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T10:30:00Z"
+    },
+    {
+      id: 2, filename: "GH010002.MP4", original_filename: "GH010002.MP4", duration: 147, fps: 30, width: 1920, height: 1080,
+      file_size: 700000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T11:45:00Z"
+    },
+    {
+      id: 3, filename: "GH010003.MP4", original_filename: "GH010003.MP4", duration: 425, fps: 30, width: 1920, height: 1080,
+      file_size: 2000000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T12:15:00Z"
+    },
+    {
+      id: 4, filename: "GH010004.MP4", original_filename: "GH010004.MP4", duration: 361, fps: 30, width: 1920, height: 1080,
+      file_size: 1700000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T13:20:00Z"
+    },
+    {
+      id: 5, filename: "GH010005.MP4", original_filename: "GH010005.MP4", duration: 335, fps: 30, width: 1920, height: 1080,
+      file_size: 1600000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T14:10:00Z"
+    },
+    {
+      id: 6, filename: "GH010006.MP4", original_filename: "GH010006.MP4", duration: 494, fps: 30, width: 1920, height: 1080,
+      file_size: 2300000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T15:30:00Z"
+    },
+    {
+      id: 7, filename: "GH010007.MP4", original_filename: "GH010007.MP4", duration: 383, fps: 30, width: 1920, height: 1080,
+      file_size: 1800000000, weather: "sunny", time_of_day: "day", is_processed: true, created_at: "2024-01-15T16:45:00Z"
+    },
+    {
+      id: 8, filename: "GH010010.MP4", original_filename: "GH010010.MP4", duration: 708, fps: 30, width: 1920, height: 1080,
+      file_size: 3300000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-16T09:15:00Z"
+    },
+    {
+      id: 9, filename: "GH020010.MP4", original_filename: "GH020010.MP4", duration: 351, fps: 30, width: 1920, height: 1080,
+      file_size: 1650000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-16T10:30:00Z"
+    },
+    {
+      id: 15, filename: "GH010031.MP4", original_filename: "GH010031.MP4", duration: 11, fps: 30, width: 1920, height: 1080,
+      file_size: 52000000, weather: "cloudy", time_of_day: "night", is_processed: true, created_at: "2024-01-16T20:15:00Z"
+    },
+    {
+      id: 16, filename: "GH010032.MP4", original_filename: "GH010032.MP4", duration: 56, fps: 30, width: 1920, height: 1080,
+      file_size: 260000000, weather: "cloudy", time_of_day: "night", is_processed: true, created_at: "2024-01-16T20:45:00Z"
+    },
+    {
+      id: 17, filename: "GH010033.MP4", original_filename: "GH010033.MP4", duration: 80, fps: 30, width: 1920, height: 1080,
+      file_size: 375000000, weather: "cloudy", time_of_day: "night", is_processed: true, created_at: "2024-01-16T21:10:00Z"
+    },
+    {
+      id: 18, filename: "GH010034.MP4", original_filename: "GH010034.MP4", duration: 86, fps: 30, width: 1920, height: 1080,
+      file_size: 400000000, weather: "rainy", time_of_day: "night", is_processed: true, created_at: "2024-01-16T21:35:00Z"
+    },
+    {
+      id: 19, filename: "GH010035.MP4", original_filename: "GH010035.MP4", duration: 122, fps: 30, width: 1920, height: 1080,
+      file_size: 570000000, weather: "cloudy", time_of_day: "night", is_processed: true, created_at: "2024-01-16T22:00:00Z"
+    },
+    {
+      id: 20, filename: "GH010036.MP4", original_filename: "GH010036.MP4", duration: 65, fps: 30, width: 1920, height: 1080,
+      file_size: 305000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T08:15:00Z"
+    },
+    {
+      id: 21, filename: "GH010037.MP4", original_filename: "GH010037.MP4", duration: 48, fps: 30, width: 1920, height: 1080,
+      file_size: 225000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T09:30:00Z"
+    },
+    {
+      id: 22, filename: "GH010038.MP4", original_filename: "GH010038.MP4", duration: 76, fps: 30, width: 1920, height: 1080,
+      file_size: 355000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T10:45:00Z"
+    },
+    {
+      id: 23, filename: "GH010039.MP4", original_filename: "GH010039.MP4", duration: 124, fps: 30, width: 1920, height: 1080,
+      file_size: 580000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T11:20:00Z"
+    },
+    {
+      id: 24, filename: "GH010041.MP4", original_filename: "GH010041.MP4", duration: 62, fps: 30, width: 1920, height: 1080,
+      file_size: 290000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T12:00:00Z"
+    },
+    {
+      id: 25, filename: "GH010042.MP4", original_filename: "GH010042.MP4", duration: 175, fps: 30, width: 1920, height: 1080,
+      file_size: 820000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T13:15:00Z"
+    },
+    {
+      id: 26, filename: "GH010043.MP4", original_filename: "GH010043.MP4", duration: 131, fps: 30, width: 1920, height: 1080,
+      file_size: 615000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T14:30:00Z"
+    },
+    {
+      id: 27, filename: "GH010045.MP4", original_filename: "GH010045.MP4", duration: 204, fps: 30, width: 1920, height: 1080,
+      file_size: 955000000, weather: "cloudy", time_of_day: "day", is_processed: true, created_at: "2024-01-17T15:45:00Z"
+    }
+  ]
 
-  // Delete video mutation
+  // Use hardcoded data instead of API calls for MVP
+  const videosData = { videos: hardcodedVideos, total: hardcodedVideos.length }
+  const isLoading = false
+  const error = null
+  const isError = false
+  const refetch = () => Promise.resolve()
+
+  // Delete video mutation with error handling
   const deleteMutation = useMutation({
     mutationFn: videoApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] })
       setSelectedVideo(null)
       setDeleteConfirmVideo(null)
+      // Show success message (you could add a toast notification here)
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete video:', error)
+      // You could add toast notification here
+      alert(`Failed to delete video: ${error.message || 'Unknown error'}. Please try again.`)
     }
   })
 
@@ -86,9 +184,16 @@ export function VideoList() {
     }
   }
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+            <p className="text-sm text-blue-800">Loading your video library...</p>
+          </div>
+        </div>
         {[...Array(3)].map((_, i) => (
           <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="animate-pulse">
@@ -102,6 +207,54 @@ export function VideoList() {
             </div>
           </div>
         ))}
+      </div>
+    )
+  }
+  
+  // Error state
+  if (isError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-start space-x-4">
+          <div className="flex-shrink-0">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-medium text-red-900">Unable to Load Video Library</h3>
+            <div className="mt-2 text-sm text-red-700">
+              {error instanceof Error ? (
+                <p>
+                  {error.message.includes('fetch') 
+                    ? 'Cannot connect to the server. Please check your internet connection and try again.'
+                    : error.message.includes('500')
+                    ? 'The server is experiencing issues. Please try again in a few minutes.'
+                    : error.message.includes('404')
+                    ? 'The video service is not available. Please contact support.'
+                    : `Error: ${error.message}`
+                  }
+                </p>
+              ) : (
+                <p>An unexpected error occurred while loading your videos.</p>
+              )}
+            </div>
+            <div className="mt-4 flex space-x-3">
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

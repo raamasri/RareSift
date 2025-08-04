@@ -188,14 +188,16 @@ async def list_videos(
     skip: int = 0,
     limit: int = 10,
     processed_only: bool = False,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_optional_user),
     db: Session = Depends(get_db),
     _: None = Depends(rate_limit_generous)
 ):
     """
-    List all videos with pagination (filtered by current user)
+    List all videos with pagination (optionally filtered by current user)
     """
-    query = db.query(Video).filter(Video.user_id == current_user.id)
+    query = db.query(Video)
+    if current_user:
+        query = query.filter(Video.user_id == current_user.id)
     
     if processed_only:
         query = query.filter(Video.is_processed == True)
@@ -211,17 +213,18 @@ async def list_videos(
 @router.get("/{video_id}", response_model=VideoResponse)
 async def get_video(
     video_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_optional_user),
     db: Session = Depends(get_db),
     _: None = Depends(rate_limit_generous)
 ):
     """
-    Get a specific video by ID (filtered by current user)
+    Get a specific video by ID (optionally filtered by current user)
     """
-    video = db.query(Video).filter(
-        Video.id == video_id,
-        Video.user_id == current_user.id
-    ).first()
+    query = db.query(Video).filter(Video.id == video_id)
+    if current_user:
+        query = query.filter(Video.user_id == current_user.id)
+    
+    video = query.first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     

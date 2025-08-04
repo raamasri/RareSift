@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_optional_user, rate_limit_moderate, rate_limit_generous
 from app.core.security import file_validator, secure_delete_file
 from app.core.validation import input_sanitizer, ValidatedSearchRequest
-from app.services.embedding_service import EmbeddingService
+from app.services.openai_embedding_service import OpenAIEmbeddingService as EmbeddingService
 from app.models.video import Video, Frame
 from app.models.user import User
 
@@ -58,7 +58,7 @@ embedding_service = EmbeddingService()
 @router.post("/text", response_model=SearchResponse)
 async def search_by_text(
     request: TextSearchRequest,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -70,11 +70,11 @@ async def search_by_text(
         if request.filters:
             filters_dict = request.filters.model_dump(exclude_none=True)
         
-        # Perform search
+        # Perform search (use None for user_id if not authenticated)
         search_results = await embedding_service.search_by_text(
             db=db,
             query_text=request.query,
-            user_id=current_user.id,
+            user_id=current_user.id if current_user else None,
             limit=request.limit,
             similarity_threshold=request.similarity_threshold,
             filters=filters_dict
@@ -130,8 +130,29 @@ async def search_by_text(
             filters=filters_dict
         )
         
+    except ValueError as e:
+        # Handle validation errors
+        raise HTTPException(status_code=400, detail=f"Invalid search parameters: {str(e)}")
+    except TimeoutError as e:
+        # Handle timeout errors
+        raise HTTPException(status_code=408, detail="Search request timed out. The AI service may be busy. Please try again.")
+    except ConnectionError as e:
+        # Handle connection errors
+        raise HTTPException(status_code=503, detail="Unable to connect to AI service. Please try again later.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+        # Log the full error for debugging
+        import traceback
+        print(f"Search error: {traceback.format_exc()}")
+        
+        # Return user-friendly error message
+        if "rate limit" in str(e).lower():
+            raise HTTPException(status_code=429, detail="AI service rate limit exceeded. Please wait a moment and try again.")
+        elif "api key" in str(e).lower() or "authentication" in str(e).lower():
+            raise HTTPException(status_code=503, detail="AI service configuration error. Please contact support.")
+        elif "network" in str(e).lower() or "connection" in str(e).lower():
+            raise HTTPException(status_code=503, detail="Network connectivity issue. Please try again.")
+        else:
+            raise HTTPException(status_code=500, detail="An unexpected error occurred during search. Please try again or contact support if the problem persists.")
 
 @router.post("/image", response_model=SearchResponse)
 async def search_by_image(
@@ -142,7 +163,7 @@ async def search_by_image(
     weather: Optional[str] = Form(None),
     speed_min: Optional[float] = Form(None),
     speed_max: Optional[float] = Form(None),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_optional_user),
     db: Session = Depends(get_db),
     _: None = Depends(rate_limit_moderate)
 ):
@@ -206,7 +227,20 @@ async def search_by_image(
         # Clean up temporary file on error
         if 'temp_image_path' in locals():
             secure_delete_file(temp_image_path, tempfile.gettempdir())
-        raise HTTPException(status_code=500, detail=f"Image search failed: {str(e)}")
+        
+        # Log the full error for debugging
+        import traceback
+        print(f"Image search error: {traceback.format_exc()}")
+        
+        # Return user-friendly error message
+        if "rate limit" in str(e).lower():
+            raise HTTPException(status_code=429, detail="AI service rate limit exceeded. Please wait a moment and try again.")
+        elif "unsupported image" in str(e).lower() or "invalid image" in str(e).lower():
+            raise HTTPException(status_code=400, detail="Unsupported image format. Please use JPEG, PNG, or WebP images.")
+        elif "file too large" in str(e).lower():
+            raise HTTPException(status_code=413, detail="Image file is too large. Please use an image smaller than 10MB.")
+        else:
+            raise HTTPException(status_code=500, detail="Image search failed. Please try again with a different image or contact support.")
 
 @router.get("/history")
 async def get_search_history(
@@ -240,6 +274,93 @@ async def get_search_history(
         ],
         "total": total
     }
+
+@router.get("/rate-limit-status")
+async def get_rate_limit_status(
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(rate_limit_generous)
+):
+    """
+    Get current OpenAI API rate limiting status for monitoring
+    """
+    try:
+        embedding_service = EmbeddingService()
+        
+        if not embedding_service.is_initialized:
+            await embedding_service.initialize()
+        
+        status = embedding_service.get_rate_limit_status()
+        
+        # Add helpful status indicators
+        status['status_indicators'] = {}
+        
+        # RPM Status
+        rpm_percentage = status['requests_per_minute']['percentage']
+        if rpm_percentage >= 90:
+            status['status_indicators']['rpm'] = 'critical'
+        elif rpm_percentage >= 70:
+            status['status_indicators']['rpm'] = 'warning'
+        else:
+            status['status_indicators']['rpm'] = 'healthy'
+        
+        # TPM Status
+        tpm_percentage = status['tokens_per_minute']['percentage']
+        if tpm_percentage >= 90:
+            status['status_indicators']['tpm'] = 'critical'
+        elif tpm_percentage >= 70:
+            status['status_indicators']['tpm'] = 'warning'
+        else:
+            status['status_indicators']['tpm'] = 'healthy'
+        
+        # Cost Status
+        cost_percentage = status['daily_cost']['percentage']
+        if cost_percentage >= 90:
+            status['status_indicators']['cost'] = 'critical'
+        elif cost_percentage >= 70:
+            status['status_indicators']['cost'] = 'warning'
+        else:
+            status['status_indicators']['cost'] = 'healthy'
+        
+        # Overall Status
+        all_indicators = list(status['status_indicators'].values())
+        if 'critical' in all_indicators:
+            status['overall_status'] = 'critical'
+        elif 'warning' in all_indicators:
+            status['overall_status'] = 'warning'
+        else:
+            status['overall_status'] = 'healthy'
+        
+        return status
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get rate limit status: {str(e)}")
+
+@router.post("/check-batch-limits")
+async def check_batch_limits(
+    estimated_requests: int = Query(..., ge=1, le=1000, description="Number of requests in batch"),
+    estimated_tokens_per_request: int = Query(150, ge=10, le=1000, description="Estimated tokens per request"),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(rate_limit_generous)
+):
+    """
+    Check if a batch operation would exceed rate limits
+    Useful for planning large uploads or processing jobs
+    """
+    try:
+        embedding_service = EmbeddingService()
+        
+        if not embedding_service.is_initialized:
+            await embedding_service.initialize()
+        
+        check_result = await embedding_service.check_rate_limits_before_batch(
+            estimated_requests=estimated_requests,
+            estimated_tokens_per_request=estimated_tokens_per_request
+        )
+        
+        return check_result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check batch limits: {str(e)}")
 
 @router.get("/{search_id}")
 async def get_search_details(

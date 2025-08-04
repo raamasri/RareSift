@@ -20,12 +20,10 @@ interface SearchResult {
 }
 
 interface SearchResponse {
-  search_id: number
   results: SearchResult[]
   total_found: number | string
   search_time_ms: number
   query_text?: string
-  filters: { [key: string]: any }
 }
 
 export default function InteractiveDemo() {
@@ -106,11 +104,15 @@ export default function InteractiveDemo() {
                     >
                       {/* Frame Thumbnail */}
                       <div className="h-48 rounded-lg mb-4 relative overflow-hidden bg-gray-200 dark:bg-gray-600">
-                        {result.frame_url ? (
+                        {result.frame_path ? (
                           <img
-                            src={result.frame_url}
+                            src={`http://localhost:8000/frames/${result.frame_path.split('/').pop()}`}
                             alt={`Frame from ${result.video_filename}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
@@ -167,7 +169,7 @@ export default function InteractiveDemo() {
                     <span>Query: "{searchResults.query_text}"</span>
                   </div>
                   <div className="text-gray-300 dark:text-gray-600">•</div>
-                  <div>Search ID: {searchResults.search_id}</div>
+                  <div>Search Time: {searchResults.search_time_ms}ms</div>
                   <div className="text-gray-300 dark:text-gray-600">•</div>
                   <div>4,985 frames indexed</div>
                 </div>

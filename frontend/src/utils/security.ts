@@ -83,10 +83,20 @@ export function sanitizeSearchQuery(query: string | null | undefined): string {
 }
 
 /**
- * Generate safe API URLs
+ * Generate safe API URLs with environment detection
  */
 export function getSafeApiUrl(endpoint: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  // Try to import environment config, fallback to env vars
+  let baseUrl: string;
+  
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { getApiBaseUrl } = require('./environment');
+    baseUrl = getApiBaseUrl();
+  } catch {
+    // Fallback to environment variable
+    baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  }
   
   // Validate base URL
   if (!baseUrl.match(/^https?:\/\//)) {

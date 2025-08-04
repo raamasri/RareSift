@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Regenerate embeddings using OpenAI API for better search accuracy
-This script will regenerate a small subset of embeddings for testing
+MAXIMUM SPEED OpenAI Embedding Generation
+Ultra-aggressive parallel processing with dynamic rate limiting
 """
 
 import os
@@ -10,8 +10,10 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import List, Dict, Optional
-from datetime import datetime
 import time
+import aiohttp
+import json
+from dataclasses import dataclass
 
 # Add the backend directory to Python path
 sys.path.append(str(Path(__file__).parent))
@@ -21,26 +23,42 @@ from sqlalchemy import create_engine, text
 from app.core.database import get_db
 from app.core.config import settings
 from app.models.video import Video, Frame, Embedding
-from app.services.simple_openai_embedding_service import SimpleOpenAIEmbeddingService
 import numpy as np
-from PIL import Image
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class OpenAIEmbeddingRegenerator:
-    """Regenerate embeddings using OpenAI API for better accuracy"""
+@dataclass
+class ProcessingStats:
+    processed: int = 0
+    failed: int = 0
+    start_time: float = 0
+    
+    def rate(self) -> float:
+        elapsed = time.time() - self.start_time
+        return self.processed / (elapsed / 60) if elapsed > 0 else 0
+
+class MaxSpeedOpenAIProcessor:
+    """Ultra-high speed OpenAI processing with maximum concurrency"""
     
     def __init__(self):
-        self.embedding_service = SimpleOpenAIEmbeddingService()
+        # MAXIMUM SPEED CONFIGURATION
+        self.max_workers = 25  # Maximum parallel workers
+        self.batch_size = 3    # Smaller batches for faster feedback
+        self.rate_limit_delay = 0.05  # Minimal delay
+        self.worker_delay = 0.02     # Fast worker starts
         
-        # Create database engine
+        # OpenAI API configuration
+        self.api_key = settings.openai_api_key
+        self.base_url = "https://api.openai.com/v1"
+        
+        # Database
         engine = create_engine(settings.database_url)
         self.SessionLocal = Session(bind=engine)
+        
+        # Statistics
+        self.stats = ProcessingStats()
         
     async def clear_existing_embeddings(self, db: Session, limit: int = None):
         """Clear existing embeddings to make room for new ones"""

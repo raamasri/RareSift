@@ -223,16 +223,22 @@ class HealthCheck:
     async def check_database(self) -> Dict[str, Any]:
         """Check database connectivity"""
         try:
-            from app.db.database import get_db
+            import time
+            from app.core.database import get_db
             from sqlalchemy import text
             
-            async for db in get_db():
-                result = await db.execute(text("SELECT 1"))
-                await db.close()
+            start_time = time.time()
+            
+            # Get database session and test connection
+            db = next(get_db())
+            result = db.execute(text("SELECT 1"))
+            db.close()
+            
+            response_time = int((time.time() - start_time) * 1000)
                 
             return {
                 'status': 'healthy',
-                'response_time_ms': 0,  # TODO: Add timing
+                'response_time_ms': response_time,
                 'message': 'Database connection successful'
             }
         except Exception as e:
@@ -320,20 +326,21 @@ class HealthCheck:
     async def check_ai_model(self) -> Dict[str, Any]:
         """Check AI model availability"""
         try:
-            from app.services.embedding_service import EmbeddingService
+            from app.services.openai_embedding_service import OpenAIEmbeddingService
             
-            # Initialize the embedding service
-            embedding_service = EmbeddingService()
+            # Initialize the OpenAI embedding service
+            embedding_service = OpenAIEmbeddingService()
+            await embedding_service.initialize()
             
             # Try to encode a test string
-            test_embedding = embedding_service.encode_text("test")
+            test_embedding = await embedding_service.encode_text("test")
             
             if test_embedding is not None and len(test_embedding) > 0:
                 return {
                     'status': 'healthy',
-                    'model': embedding_service.model_name,
+                    'model': embedding_service.embedding_model,
                     'embedding_dim': len(test_embedding),
-                    'message': 'AI model loaded and functional'
+                    'message': 'OpenAI embedding service loaded and functional'
                 }
             else:
                 return {
@@ -347,6 +354,165 @@ class HealthCheck:
                 'message': 'AI model check failed'
             }
     
+    async def check_search_availability(self) -> Dict[str, Any]:
+        """Check search API availability"""
+        try:
+            from app.core.database import get_db
+            from sqlalchemy import text
+            
+            # Check if we have processed videos and frames
+            db = next(get_db())
+            
+            # Count total videos
+            video_count = db.execute(text("SELECT COUNT(*) FROM videos")).scalar()
+            
+            # Count total frames with embeddings
+            frame_count = db.execute(text("SELECT COUNT(*) FROM frames WHERE embedding IS NOT NULL")).scalar()
+            
+            db.close()
+            
+            status = 'healthy' if video_count > 0 and frame_count > 0 else 'unhealthy'
+            message = f'Search ready: {video_count} videos, {frame_count} searchable frames'
+            
+            return {
+                'status': status,
+                'video_count': video_count,
+                'frame_count': frame_count,
+                'message': message
+            }
+        except Exception as e:
+            return {
+                'status': 'unhealthy',
+                'error': str(e),
+                'message': 'Search availability check failed'
+            }
+    
+    async def check_semantic_search(self) -> Dict[str, Any]:
+        """Check semantic natural language search capability"""
+        try:
+            from app.services.openai_embedding_service import OpenAIEmbeddingService
+            from app.core.database import get_db
+            from sqlalchemy import text
+            
+            # Initialize embedding service
+            embedding_service = OpenAIEmbeddingService()
+            await embedding_service.initialize()
+            
+            # Test semantic search pipeline
+            test_query = "test search"
+            query_embedding = await embedding_service.encode_text(test_query)
+            
+            # Test database vector search capability
+            db = next(get_db())
+            
+            # Check if pgvector extension is available
+            result = db.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")).fetchone()
+            pgvector_available = result is not None
+            
+            # Test vector similarity search if data exists
+            frame_with_embedding = db.execute(text("SELECT id FROM frames WHERE embedding IS NOT NULL LIMIT 1")).fetchone()
+            
+            db.close()
+            
+            if query_embedding is not None and pgvector_available and frame_with_embedding:
+                return {
+                    'status': 'healthy',
+                    'embedding_service': 'OpenAI',
+                    'vector_db': 'pgvector',
+                    'embedding_dim': len(query_embedding),
+                    'message': 'Semantic search fully operational'
+                }
+            else:
+                issues = []
+                if query_embedding is None:
+                    issues.append('embedding generation failed')
+                if not pgvector_available:
+                    issues.append('pgvector extension missing')
+                if not frame_with_embedding:
+                    issues.append('no embedded frames available')
+                
+                return {
+                    'status': 'unhealthy',
+                    'issues': issues,
+                    'message': f'Semantic search issues: {", ".join(issues)}'
+                }
+        except Exception as e:
+            return {
+                'status': 'unhealthy',
+                'error': str(e),
+                'message': 'Semantic search check failed'
+            }
+    
+    async def check_video_embedding_server(self) -> Dict[str, Any]:
+        """Check video processing and embedding server availability"""
+        try:
+            import os
+            from app.core.database import get_db
+            from sqlalchemy import text
+            
+            db = next(get_db())
+            
+            # Check upload directory
+            upload_dir = '/app/uploads'
+            upload_dir_exists = os.path.exists(upload_dir) and os.path.isdir(upload_dir)
+            upload_dir_writable = os.access(upload_dir, os.W_OK) if upload_dir_exists else False
+            
+            # Check video processing status
+            total_videos = db.execute(text("SELECT COUNT(*) FROM videos")).scalar()
+            processing_videos = db.execute(text("SELECT COUNT(*) FROM videos WHERE processing_started_at IS NOT NULL AND processing_completed_at IS NULL")).scalar()
+            completed_videos = db.execute(text("SELECT COUNT(*) FROM videos WHERE is_processed = true")).scalar()
+            failed_videos = db.execute(text("SELECT COUNT(*) FROM videos WHERE processing_error IS NOT NULL")).scalar()
+            
+            # Check embedding generation status
+            total_frames = db.execute(text("SELECT COUNT(*) FROM frames")).scalar()
+            embedded_frames = db.execute(text("SELECT COUNT(*) FROM frames WHERE embedding IS NOT NULL")).scalar()
+            
+            db.close()
+            
+            # Calculate health status
+            issues = []
+            if not upload_dir_exists:
+                issues.append('upload directory missing')
+            elif not upload_dir_writable:
+                issues.append('upload directory not writable')
+            
+            if failed_videos > 0:
+                issues.append(f'{failed_videos} failed video(s)')
+            
+            embedding_coverage = (embedded_frames / total_frames * 100) if total_frames > 0 else 0
+            if embedding_coverage < 50:
+                issues.append(f'low embedding coverage ({embedding_coverage:.1f}%)')
+            
+            status = 'healthy' if len(issues) == 0 else 'warning' if embedding_coverage > 10 else 'unhealthy'
+            
+            return {
+                'status': status,
+                'upload_directory': {
+                    'exists': upload_dir_exists,
+                    'writable': upload_dir_writable,
+                    'path': upload_dir
+                },
+                'video_processing': {
+                    'total': total_videos,
+                    'processing': processing_videos,
+                    'completed': completed_videos,
+                    'failed': failed_videos
+                },
+                'embedding_generation': {
+                    'total_frames': total_frames,
+                    'embedded_frames': embedded_frames,
+                    'coverage_percent': round(embedding_coverage, 1)
+                },
+                'issues': issues,
+                'message': f'Video server: {status}' + (f' - {", ".join(issues)}' if issues else '')
+            }
+        except Exception as e:
+            return {
+                'status': 'unhealthy',
+                'error': str(e),
+                'message': 'Video/embedding server check failed'
+            }
+
     async def run_all_checks(self) -> Dict[str, Any]:
         """Run all health checks"""
         results = {
@@ -362,6 +528,9 @@ class HealthCheck:
             ('disk_space', self.check_disk_space),
             ('memory', self.check_memory),
             ('ai_model', self.check_ai_model),
+            ('search_availability', self.check_search_availability),
+            ('semantic_search', self.check_semantic_search),
+            ('video_embedding_server', self.check_video_embedding_server),
         ]
         
         # Add registered checks

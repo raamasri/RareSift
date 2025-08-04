@@ -248,7 +248,7 @@ export function SearchResults({ results }: SearchResultsProps) {
               {/* Enhanced Frame Image */}
               <div className="relative aspect-video bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
                 <Image
-                  src={result.frame_url || result.frame_path}
+                  src={`http://localhost:8000/frames/${result.frame_path.split('/').pop()}`}
                   alt={`Frame at ${formatTimestamp(result.timestamp)}`}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
