@@ -25,7 +25,7 @@ export async function retryWithBackoff<T>(
 ): Promise<T> {
   const { maxRetries, baseDelay, maxDelay, backoffFactor } = { ...defaultRetryConfig, ...config }
   
-  let lastError: Error
+  let lastError: Error = new Error('Retry failed')
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
