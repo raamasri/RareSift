@@ -29,7 +29,7 @@ pydantic-settings==2.1.0
 
 # Image processing (optimized for production)
 pillow==10.1.0
-opencv-python-headless==4.8.1.78
+opencv-python-headless==4.12.0.88
 
 # ML/AI dependencies (CPU-optimized for faster builds)
 torch==2.2.0
