@@ -226,7 +226,6 @@ export function APISearchInterface({ onSearchResults, onSearchStart }: APISearch
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400))
     
     const mockResults: SearchResponse = {
-      search_id: Math.floor(Math.random() * 1000),
       results: [
         {
           frame_id: 1,
