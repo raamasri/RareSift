@@ -295,7 +295,7 @@ export function VideoList() {
         </div>
       ) : (
         <div className="space-y-4">
-          {videos.map((video: Video) => {
+          {videos.map((video: any) => {
             const processingStatus = getProcessingStatus(video)
             const StatusIcon = processingStatus.icon
             
