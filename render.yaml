@@ -23,6 +23,13 @@ services:
           property: connectionString
     healthCheckPath: /health
     
+  # Redis Cache
+  - type: redis
+    name: raresift-redis
+    region: oregon
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    
 databases:
   # PostgreSQL Database
   - name: raresift-db
@@ -31,12 +38,3 @@ databases:
     region: oregon
     plan: free
     postgresMajorVersion: 15
-    
-services:
-  # Redis Cache
-  - type: redis
-    name: raresift-redis
-    region: oregon
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-EOF < /dev/null
