@@ -224,20 +224,7 @@ export function VideoList() {
           <div className="flex-1">
             <h3 className="text-lg font-medium text-red-900">Unable to Load Video Library</h3>
             <div className="mt-2 text-sm text-red-700">
-              {error instanceof Error ? (
-                <p>
-                  {error.message.includes('fetch') 
-                    ? 'Cannot connect to the server. Please check your internet connection and try again.'
-                    : error.message.includes('500')
-                    ? 'The server is experiencing issues. Please try again in a few minutes.'
-                    : error.message.includes('404')
-                    ? 'The video service is not available. Please contact support.'
-                    : `Error: ${error.message}`
-                  }
-                </p>
-              ) : (
-                <p>An unexpected error occurred while loading your videos.</p>
-              )}
+              <p>An unexpected error occurred while loading your videos.</p>
             </div>
             <div className="mt-4 flex space-x-3">
               <button
