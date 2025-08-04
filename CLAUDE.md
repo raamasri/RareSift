@@ -5,7 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 RareSift is an AI-powered SAAS platform for autonomous vehicle (AV) teams to search driving scenarios using natural language queries or example clips. Built as an MVP for YC application with FastAPI backend and Next.js frontend.
 
-**Current Status**: Production-ready with OpenAI CLIP integration (1536-dim embeddings), comprehensive secrets management system, and enterprise-grade security infrastructure. Complete dataset with **22 videos** (4,951 total seconds) and **4,959 frames** with full embedding coverage (100.2%).
+**Current Status**: Production-ready MVP deployed to Vercel (frontend) + Render (backend) using GitHub LFS for video storage. OpenAI CLIP integration (1536-dim embeddings), complete dataset with **22 videos** (4,951 total seconds) and **4,959 frames** with full embedding coverage (100.2%).
+
+**Deployment Architecture**: 
+- **Frontend**: Vercel (https://raresift.vercel.app) - Next.js application
+- **Backend**: Render (https://raresift-backend.onrender.com) - FastAPI with PostgreSQL + Redis
+- **Video Storage**: GitHub LFS (20GB videos) - Free for YC demo, scalable to AWS S3 later
 
 ## Development Commands
 
@@ -25,19 +30,31 @@ docker-compose logs backend
 docker-compose logs frontend
 ```
 
-### Production Management
+### Production Deployment (GitHub LFS + Vercel + Render)
 ```bash
-# Production infrastructure setup
-python3 scripts/setup-secrets.py           # Configure secrets management
-python3 scripts/setup-monitoring.py        # Deploy monitoring stack
-python3 scripts/performance-optimization.py # Optimize performance
-python3 scripts/production-cleanup.py --live # Remove debug code
+# Deploy to production (from main branch)
+git add . && git commit -m "Deploy to production"
+git push origin main
 
-# Validation and testing
-python3 scripts/validate-production-deployment.py # Full system validation
-python3 scripts/performance-test-suite.py  # Performance testing
-python3 scripts/security-audit.py          # Security validation
-python3 scripts/test-cicd-pipeline.py      # CI/CD pipeline testing
+# Frontend automatically deploys to Vercel
+# Backend automatically deploys to Render
+# Videos served via GitHub LFS (free tier: 1GB/month bandwidth)
+
+# Monitor deployments
+vercel --prod                    # Check Vercel deployment status
+render services list             # Check Render services
+```
+
+### Local Production Testing
+```bash
+# Test with production environment variables
+cd backend && export OPENAI_API_KEY=<key> && python3 simple_main.py
+cd frontend && npm run build && npm run start
+
+# Validate search functionality
+curl -X POST https://raresift-backend.onrender.com/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "traffic intersection", "limit": 10}'
 ```
 
 ### Frontend Development
@@ -226,10 +243,47 @@ Key production configurations:
 - **Multi-stage Deployment**: Staging and production environments
 - **Rollback Capabilities**: Automated rollback on deployment failures
 
-## Development Notes
-- **Production Ready**: Enterprise-grade infrastructure with comprehensive security
-- **Built for Scale**: Optimized for high-performance production deployment
-- **Automated CI/CD**: Full automation with security scanning and deployment
+## Scaling Roadmap (Post-YC)
+
+### Current MVP Architecture (Free Tier - YC Demo)
+- **Frontend**: Vercel (Free tier - unlimited bandwidth)
+- **Backend**: Render (Free tier - 750 hours/month)
+- **Database**: Render PostgreSQL (Free tier - 1GB storage)
+- **Videos**: GitHub LFS (Free tier - 1GB/month bandwidth)
+- **Total Cost**: $0/month during demo period
+
+### Phase 1: Immediate Scale (Post-Demo)
+- **Videos**: Migrate to AWS S3 + CloudFront CDN (~$10/month for 20GB + reasonable traffic)
+- **Backend**: Upgrade Render to Starter plan ($7/month for persistent compute)
+- **Database**: Upgrade to Render PostgreSQL Starter ($7/month for 10GB)
+- **Total Cost**: ~$25/month
+
+### Phase 2: Growth Scale (Customer Traction)
+- **Infrastructure**: AWS ECS/EKS for auto-scaling
+- **Database**: Amazon RDS with read replicas
+- **Storage**: S3 with intelligent tiering
+- **CDN**: CloudFront global distribution
+- **Monitoring**: DataDog, New Relic integration
+- **Total Cost**: $200-500/month (scales with usage)
+
+### Phase 3: Enterprise Scale (Series A+)
+- **Multi-region deployment** for global performance
+- **Enterprise security** (SOC2, HIPAA compliance)
+- **Custom ML pipelines** for customer-specific embeddings
+- **White-label solutions** for OEM partnerships
+- **Total Cost**: $2000+/month (scales with enterprise needs)
+
+### Migration Strategy
+The current GitHub LFS approach allows seamless migration:
+1. Update `environment.ts` to point to new CDN URLs
+2. Deploy changes to Vercel/Render
+3. Zero downtime transition
+4. All search functionality remains identical
+
+## Development Notes  
+- **MVP Ready**: Free-tier deployment suitable for YC demo and initial customer validation
+- **Future-Proof**: Architecture designed for easy scaling without breaking changes
+- **Cost-Conscious**: Can operate at $0/month during validation phase
 - **GPU Recommended**: For CLIP inference (5-10x performance improvement)
 - **pgvector Required**: PostgreSQL extension for vector similarity operations
 - **Monitoring**: Full observability stack with Prometheus + Grafana

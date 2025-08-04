@@ -146,6 +146,9 @@ export function getVideoSourceUrl(videoId: number, config: DeploymentConfig): {
   const video = videoMap[videoId] || { filename: `VIDEO_${videoId}.MP4`, folder: 'driving_camera_footage' }
   const publicPath = `/videos/${video.folder}/${video.filename}`
   const backendPath = `${config.backendUrl}/api/v1/videos/${videoId}/stream`
+  
+  // GitHub LFS URL for production deployment
+  const githubLfsPath = `https://github.com/ramasrivatsan/RareSift/raw/main/frontend/public/videos/${video.folder}/${video.filename}`
 
   if (config.isLocal) {
     // Local development: Public files preferred, backend as fallback if available
@@ -155,11 +158,11 @@ export function getVideoSourceUrl(videoId: number, config: DeploymentConfig): {
       strategy: 'hybrid'
     }
   } else if (config.isProduction) {
-    // Production: Backend preferred, public files as fallback
+    // Production: GitHub LFS preferred, public files as fallback for Vercel deployment
     return {
-      primary: backendPath,
+      primary: githubLfsPath,
       fallback: publicPath,
-      strategy: 'backend'
+      strategy: 'github-lfs'
     }
   } else {
     // Staging: Public files only for reliability
