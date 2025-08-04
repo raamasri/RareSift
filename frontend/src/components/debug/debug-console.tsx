@@ -321,9 +321,9 @@ export default function DebugConsole({ isOpen, onClose }: DebugConsoleProps) {
               <span className="font-medium text-gray-700">Search:</span>
               <span className={clsx(
                 'ml-2',
-                healthData?.checks?.search_availability?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
+                (healthData?.checks as any)?.search_availability?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
               )}>
-                {healthData?.checks?.search_availability?.status || 'Unknown'}
+                {(healthData?.checks as any)?.search_availability?.status || 'Unknown'}
               </span>
             </div>
             <div>
@@ -361,7 +361,7 @@ export default function DebugConsole({ isOpen, onClose }: DebugConsoleProps) {
             <div>
               <span className="font-medium text-gray-700">Videos:</span>
               <span className="ml-2 text-gray-900">
-                {healthData?.checks?.search_availability?.video_count || '0'}
+                {(healthData?.checks as any)?.search_availability?.video_count || '0'}
               </span>
             </div>
             <div>
