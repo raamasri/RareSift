@@ -1,0 +1,181 @@
+{
+  "generated_at": "2025-07-30T13:08:20.193094",
+  "videos": [
+    {
+      "id": "drive_01",
+      "filename": "GH010001.MP4",
+      "category": "driving_camera_footage",
+      "frames": 3,
+      "description": "Driving camera footage - GH010001.MP4"
+    },
+    {
+      "id": "drive_02",
+      "filename": "GH010002.MP4",
+      "category": "driving_camera_footage",
+      "frames": 3,
+      "description": "Driving camera footage - GH010002.MP4"
+    },
+    {
+      "id": "static_03",
+      "filename": "GH010031.MP4",
+      "category": "static_camera_footage",
+      "frames": 1,
+      "description": "Static camera footage - GH010031.MP4"
+    },
+    {
+      "id": "static_04",
+      "filename": "GH010032.MP4",
+      "category": "static_camera_footage",
+      "frames": 2,
+      "description": "Static camera footage - GH010032.MP4"
+    }
+  ],
+  "frames": [
+    {
+      "filename": "drive_01_frame_000.jpg",
+      "timestamp": 10,
+      "video_id": "drive_01",
+      "relative_path": "demo-assets/frames/drive_01_frame_000.jpg"
+    },
+    {
+      "filename": "drive_01_frame_001.jpg",
+      "timestamp": 30,
+      "video_id": "drive_01",
+      "relative_path": "demo-assets/frames/drive_01_frame_001.jpg"
+    },
+    {
+      "filename": "drive_01_frame_002.jpg",
+      "timestamp": 60,
+      "video_id": "drive_01",
+      "relative_path": "demo-assets/frames/drive_01_frame_002.jpg"
+    },
+    {
+      "filename": "drive_02_frame_000.jpg",
+      "timestamp": 10,
+      "video_id": "drive_02",
+      "relative_path": "demo-assets/frames/drive_02_frame_000.jpg"
+    },
+    {
+      "filename": "drive_02_frame_001.jpg",
+      "timestamp": 30,
+      "video_id": "drive_02",
+      "relative_path": "demo-assets/frames/drive_02_frame_001.jpg"
+    },
+    {
+      "filename": "drive_02_frame_002.jpg",
+      "timestamp": 60,
+      "video_id": "drive_02",
+      "relative_path": "demo-assets/frames/drive_02_frame_002.jpg"
+    },
+    {
+      "filename": "static_03_frame_000.jpg",
+      "timestamp": 10,
+      "video_id": "static_03",
+      "relative_path": "demo-assets/frames/static_03_frame_000.jpg"
+    },
+    {
+      "filename": "static_04_frame_000.jpg",
+      "timestamp": 10,
+      "video_id": "static_04",
+      "relative_path": "demo-assets/frames/static_04_frame_000.jpg"
+    },
+    {
+      "filename": "static_04_frame_001.jpg",
+      "timestamp": 30,
+      "video_id": "static_04",
+      "relative_path": "demo-assets/frames/static_04_frame_001.jpg"
+    }
+  ],
+  "scenarios": [
+    {
+      "query": "cars turning left in intersection",
+      "description": "Vehicles making left turns at traffic intersections",
+      "category": "traffic_maneuvers",
+      "example_frames": [
+        {
+          "filename": "drive_01_frame_000.jpg",
+          "timestamp": 10,
+          "video_id": "drive_01",
+          "relative_path": "demo-assets/frames/drive_01_frame_000.jpg"
+        },
+        {
+          "filename": "drive_02_frame_001.jpg",
+          "timestamp": 30,
+          "video_id": "drive_02",
+          "relative_path": "demo-assets/frames/drive_02_frame_001.jpg"
+        },
+        {
+          "filename": "static_04_frame_001.jpg",
+          "timestamp": 30,
+          "video_id": "static_04",
+          "relative_path": "demo-assets/frames/static_04_frame_001.jpg"
+        }
+      ]
+    },
+    {
+      "query": "pedestrians crossing street",
+      "description": "People walking across roads and crosswalks",
+      "category": "pedestrian_activity",
+      "example_frames": [
+        {
+          "filename": "drive_01_frame_001.jpg",
+          "timestamp": 30,
+          "video_id": "drive_01",
+          "relative_path": "demo-assets/frames/drive_01_frame_001.jpg"
+        },
+        {
+          "filename": "drive_02_frame_002.jpg",
+          "timestamp": 60,
+          "video_id": "drive_02",
+          "relative_path": "demo-assets/frames/drive_02_frame_002.jpg"
+        }
+      ]
+    },
+    {
+      "query": "vehicles in rainy conditions",
+      "description": "Driving scenes with wet roads and weather",
+      "category": "weather_conditions",
+      "example_frames": [
+        {
+          "filename": "drive_01_frame_002.jpg",
+          "timestamp": 60,
+          "video_id": "drive_01",
+          "relative_path": "demo-assets/frames/drive_01_frame_002.jpg"
+        },
+        {
+          "filename": "static_03_frame_000.jpg",
+          "timestamp": 10,
+          "video_id": "static_03",
+          "relative_path": "demo-assets/frames/static_03_frame_000.jpg"
+        }
+      ]
+    },
+    {
+      "query": "urban street scenes",
+      "description": "City street navigation and traffic",
+      "category": "urban_driving",
+      "example_frames": [
+        {
+          "filename": "drive_02_frame_000.jpg",
+          "timestamp": 10,
+          "video_id": "drive_02",
+          "relative_path": "demo-assets/frames/drive_02_frame_000.jpg"
+        },
+        {
+          "filename": "static_04_frame_000.jpg",
+          "timestamp": 10,
+          "video_id": "static_04",
+          "relative_path": "demo-assets/frames/static_04_frame_000.jpg"
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total_videos": 4,
+    "total_frames": 9,
+    "categories": [
+      "driving_camera_footage",
+      "static_camera_footage"
+    ]
+  }
+}
