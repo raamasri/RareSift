@@ -330,9 +330,9 @@ export default function DebugConsole({ isOpen, onClose }: DebugConsoleProps) {
               <span className="font-medium text-gray-700">Semantic:</span>
               <span className={clsx(
                 'ml-2',
-                healthData?.checks?.semantic_search?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
+                (healthData?.checks as any)?.semantic_search?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
               )}>
-                {healthData?.checks?.semantic_search?.status || 'Unknown'}
+                {(healthData?.checks as any)?.semantic_search?.status || 'Unknown'}
               </span>
             </div>
           </div>
@@ -343,19 +343,19 @@ export default function DebugConsole({ isOpen, onClose }: DebugConsoleProps) {
               <span className="font-medium text-gray-700">Video Server:</span>
               <span className={clsx(
                 'ml-2',
-                healthData?.checks?.video_embedding_server?.status === 'healthy' ? 'text-green-600' : 
-                healthData?.checks?.video_embedding_server?.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                (healthData?.checks as any)?.video_embedding_server?.status === 'healthy' ? 'text-green-600' : 
+                (healthData?.checks as any)?.video_embedding_server?.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
               )}>
-                {healthData?.checks?.video_embedding_server?.status || 'Unknown'}
+                {(healthData?.checks as any)?.video_embedding_server?.status || 'Unknown'}
               </span>
             </div>
             <div>
               <span className="font-medium text-gray-700">Redis:</span>
               <span className={clsx(
                 'ml-2',
-                healthData?.checks?.redis?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
+                (healthData?.checks as any)?.redis?.status === 'healthy' ? 'text-green-600' : 'text-red-600'
               )}>
-                {healthData?.checks?.redis?.status || 'Unknown'}
+                {(healthData?.checks as any)?.redis?.status || 'Unknown'}
               </span>
             </div>
             <div>
