@@ -65,7 +65,7 @@ export async function retryWithBackoff<T>(
  */
 export async function fetchWithRetry(
   url: string,
-  options: RequestInit = {},
+  options: RequestInit & { timeout?: number } = {},
   retryConfig?: Partial<RetryConfig>
 ): Promise<Response> {
   const controller = new AbortController()
