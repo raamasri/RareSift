@@ -289,9 +289,7 @@ export function APISearchInterface({ onSearchResults, onSearchStart }: APISearch
         }
       ],
       total_found: 4,
-      search_time_ms: Math.round(50 + Math.random() * 150),
-      query_text: query.trim(),
-      filters: {}
+      search_time_ms: Math.round(50 + Math.random() * 150)
     }
     
     onSearchResults?.(mockResults)
