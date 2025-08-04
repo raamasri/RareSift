@@ -484,7 +484,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-gray-500">{activity.time}</p>
-                        <p className="text-xs text-gray-600">{activity.details}</p>
+                        {(activity as any).details && (
+                          <p className="text-xs text-gray-600">{(activity as any).details}</p>
+                        )}
                       </div>
                     </div>
                   </div>
