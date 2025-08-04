@@ -116,7 +116,7 @@ export async function checkBackendHealth(backendUrl: string, timeout = 3000): Pr
 export function getVideoSourceUrl(videoId: number, config: DeploymentConfig): {
   primary: string
   fallback: string
-  strategy: 'backend' | 'public' | 'hybrid'
+  strategy: 'backend' | 'public' | 'hybrid' | 'github-lfs'
 } {
   const videoMap: { [key: number]: { filename: string; folder: string } } = {
     1: { filename: 'GH010001.MP4', folder: 'driving_camera_footage' },
