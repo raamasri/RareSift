@@ -1,8 +1,16 @@
 # Vercel Deployment Ignore File
 # Exclude large files and backend assets from Vercel deployment
 
-# Backend files
-backend/
+# Backend specific files (not frontend)
+backend/app/
+backend/alembic/
+backend/uploads/
+backend/frames/
+backend/.env*
+backend/Dockerfile*
+backend/requirements*.txt
+backend/*.py
+backend/start.sh
 docker-compose*.yml
 Dockerfile*
 *.log
