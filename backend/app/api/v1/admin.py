@@ -21,9 +21,158 @@ async def initialize_database(db: Session = Depends(get_db)):
     Emergency endpoint to fix missing tables issue
     """
     try:
-        # Create all tables
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
+        # First try to create pgvector extension
+        logger.info("Attempting to create pgvector extension...")
+        try:
+            db.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            db.commit()
+            logger.info("✅ pgvector extension created successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not create pgvector extension: {e}")
+            logger.info("Continuing without pgvector - will use TEXT columns for embeddings")
+        
+        # Create tables manually without using SQLAlchemy metadata (to avoid vector issues)
+        logger.info("Creating database tables manually...")
+        
+        # Create users table
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR UNIQUE NOT NULL,
+                hashed_password VARCHAR NOT NULL,
+                full_name VARCHAR NOT NULL,
+                company VARCHAR,
+                role VARCHAR,
+                is_active BOOLEAN DEFAULT TRUE,
+                is_verified BOOLEAN DEFAULT FALSE,
+                is_superuser BOOLEAN DEFAULT FALSE,
+                video_upload_count INTEGER DEFAULT 0,
+                search_count INTEGER DEFAULT 0,
+                export_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_active_at TIMESTAMP,
+                preferences JSONB DEFAULT '{}'
+            )
+        """))
+        
+        # Create videos table
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS videos (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR NOT NULL,
+                original_filename VARCHAR NOT NULL,
+                file_path VARCHAR NOT NULL,
+                file_size INTEGER NOT NULL,
+                duration FLOAT NOT NULL,
+                fps FLOAT NOT NULL,
+                width INTEGER NOT NULL,
+                height INTEGER NOT NULL,
+                video_metadata JSONB DEFAULT '{}',
+                weather VARCHAR,
+                time_of_day VARCHAR,
+                location VARCHAR,
+                speed_avg FLOAT,
+                is_processed BOOLEAN DEFAULT FALSE,
+                processing_started_at TIMESTAMP,
+                processing_completed_at TIMESTAMP,
+                processing_error TEXT,
+                user_id INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        
+        # Create frames table
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS frames (
+                id SERIAL PRIMARY KEY,
+                video_id INTEGER REFERENCES videos(id) NOT NULL,
+                frame_number INTEGER NOT NULL,
+                timestamp FLOAT NOT NULL,
+                frame_path VARCHAR,
+                speed FLOAT,
+                frame_metadata JSONB DEFAULT '{}',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        
+        # Create embeddings table (with or without vector)
+        try:
+            # Try with vector type first
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS embeddings (
+                    id SERIAL PRIMARY KEY,
+                    frame_id INTEGER REFERENCES frames(id) NOT NULL,
+                    embedding VECTOR(1536) NOT NULL,
+                    model_name VARCHAR NOT NULL DEFAULT 'text-embedding-ada-002',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            logger.info("✅ Created embeddings table with VECTOR type")
+        except Exception as e:
+            logger.warning(f"Failed to create with VECTOR type: {e}")
+            # Fallback to TEXT type
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS embeddings (
+                    id SERIAL PRIMARY KEY,
+                    frame_id INTEGER REFERENCES frames(id) NOT NULL,
+                    embedding TEXT NOT NULL,
+                    model_name VARCHAR NOT NULL DEFAULT 'text-embedding-ada-002',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            logger.info("✅ Created embeddings table with TEXT type (fallback)")
+        
+        # Create searches table
+        try:
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS searches (
+                    id SERIAL PRIMARY KEY,
+                    query_text TEXT,
+                    query_type VARCHAR NOT NULL,
+                    query_embedding VECTOR(1536),
+                    limit_results INTEGER,
+                    similarity_threshold FLOAT,
+                    filters JSONB DEFAULT '{}',
+                    results_count INTEGER DEFAULT 0,
+                    response_time_ms INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+        except Exception:
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS searches (
+                    id SERIAL PRIMARY KEY,
+                    query_text TEXT,
+                    query_type VARCHAR NOT NULL,
+                    query_embedding TEXT,
+                    limit_results INTEGER,
+                    similarity_threshold FLOAT,
+                    filters JSONB DEFAULT '{}',
+                    results_count INTEGER DEFAULT 0,
+                    response_time_ms INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+        
+        # Create exports table
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS exports (
+                id SERIAL PRIMARY KEY,
+                search_id INTEGER REFERENCES searches(id),
+                frame_ids JSONB NOT NULL,
+                export_format VARCHAR DEFAULT 'zip',
+                status VARCHAR DEFAULT 'pending',
+                file_path VARCHAR,
+                file_size INTEGER,
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP
+            )
+        """))
+        
+        db.commit()
         
         # Verify tables were created
         tables_created = []
@@ -33,15 +182,9 @@ async def initialize_database(db: Session = Depends(get_db)):
             try:
                 result = db.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
                 tables_created.append(table)
+                logger.info(f"✅ Table '{table}' verified")
             except Exception as e:
-                logger.warning(f"Table {table} verification failed: {e}")
-        
-        # Create pgvector extension
-        try:
-            db.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            db.commit()
-        except Exception as e:
-            logger.warning(f"Could not create pgvector extension: {e}")
+                logger.warning(f"❌ Table {table} verification failed: {e}")
         
         return {
             "status": "success",
@@ -49,6 +192,7 @@ async def initialize_database(db: Session = Depends(get_db)):
             "tables_created": tables_created,
             "total_tables": len(tables_created),
             "required_tables": len(required_tables),
+            "pgvector_available": len([t for t in tables_created if t == 'embeddings']) > 0,
             "next_step": "Call /admin/load-real-data to populate with actual data"
         }
         
