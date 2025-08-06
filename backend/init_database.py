@@ -47,16 +47,18 @@ def create_tables_if_not_exist():
 def check_tables_exist():
     """Check if required tables exist"""
     required_tables = ['users', 'videos', 'frames', 'embeddings', 'searches', 'exports']
+    existing_tables = []
     
-    with engine.connect() as conn:
-        existing_tables = []
-        for table in required_tables:
-            try:
+    for table in required_tables:
+        try:
+            with engine.connect() as conn:
                 result = conn.execute(text(f"SELECT 1 FROM {table} LIMIT 1"))
                 existing_tables.append(table)
                 logger.info(f"✅ Table '{table}' exists")
-            except ProgrammingError:
-                logger.warning(f"❌ Table '{table}' does not exist")
+        except ProgrammingError:
+            logger.warning(f"❌ Table '{table}' does not exist")
+        except Exception as e:
+            logger.warning(f"❌ Table '{table}' check failed: {e}")
     
     return existing_tables
 
