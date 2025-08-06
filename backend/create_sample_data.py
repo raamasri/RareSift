@@ -11,13 +11,14 @@ from sqlalchemy.orm import Session
 # Add the app directory to the Python path
 sys.path.append('/app')
 
-from app.core.database import get_db_session
+from app.core.database import SessionLocal
 from app.models.video import Video, Frame, Embedding, Search
 from app.models.user import User
 
 def create_sample_user():
     """Create a default user for the system"""
-    with get_db_session() as db:
+    db = SessionLocal()
+    try:
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == "demo@raresift.com").first()
         if existing_user:
@@ -38,10 +39,13 @@ def create_sample_user():
         db.refresh(user)
         print(f"Created demo user with ID: {user.id}")
         return user.id
+    finally:
+        db.close()
 
 def create_sample_videos_and_frames(user_id: int):
     """Create sample videos and frames with embeddings for search functionality"""
-    with get_db_session() as db:
+    db = SessionLocal()
+    try:
         # Check if sample data already exists
         existing_videos = db.query(Video).count()
         if existing_videos > 0:
@@ -188,6 +192,8 @@ def create_sample_videos_and_frames(user_id: int):
         
         db.commit()
         print(f"Created {len(video_scenarios)} sample videos with {sum(len(v['frame_descriptions']) for v in video_scenarios)} frames and embeddings")
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     print("Creating sample data for RareSift...")
