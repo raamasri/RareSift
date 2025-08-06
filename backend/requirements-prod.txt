@@ -34,7 +34,7 @@ opencv-python-headless==4.8.1.78
 # ML/AI dependencies (CPU-optimized for faster builds)
 torch==2.2.0
 torchvision==0.17.0
-transformers==4.36.0
+transformers==4.53.0
 git+https://github.com/openai/CLIP.git
 openai==1.3.0
 
