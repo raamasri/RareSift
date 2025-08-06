@@ -234,3 +234,5 @@ uploads/
 # Redis dump
 dump.rdb 
 .vercel
+.env*.local
+backend/.env

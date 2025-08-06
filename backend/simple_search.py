@@ -3,8 +3,12 @@ import openai
 import os
 from typing import List, Dict
 from sqlalchemy import text
+from dotenv import load_dotenv
 from simple_database import get_db
 from simple_models import Video, Frame, Embedding
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize OpenAI client
 openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))

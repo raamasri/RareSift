@@ -6,6 +6,10 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from simple_database import get_db
 from simple_models import Video, Frame, Embedding
