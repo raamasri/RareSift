@@ -13,9 +13,9 @@ python init_database.py
 echo "Running database migrations..."
 python -m alembic upgrade head
 
-# Create sample data if needed (for demo without actual video files)
-echo "Creating sample data if needed..."
-python create_sample_data.py
+# Load real data from existing demo metadata if needed
+echo "Loading real data if needed..."
+python load_real_data.py
 
 # Start the FastAPI server
 echo "Starting FastAPI server..."
