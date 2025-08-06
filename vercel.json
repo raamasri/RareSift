@@ -3,14 +3,6 @@
   "env": {
     "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com"
   },
-  "functions": {
-    "frontend/src/app/api/**/*.js": {
-      "maxDuration": 30
-    },
-    "frontend/src/app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
   "regions": ["iad1"],
   "framework": "nextjs",
   "buildCommand": "cd frontend && npm run build",
