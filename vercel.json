@@ -1,25 +1,18 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
-  ],
   "env": {
     "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com"
   },
   "functions": {
-    "frontend/src/pages/api/**/*.js": {
+    "frontend/src/app/api/**/*.js": {
+      "maxDuration": 30
+    },
+    "frontend/src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
   "regions": ["iad1"],
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next"
 }
