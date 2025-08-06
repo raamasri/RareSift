@@ -27,7 +27,7 @@
     "autoprefixer": "10.4.16",
     "axios": "^1.11.0",
     "class-variance-authority": "0.7.0",
-    "clsx": "2.0.0",
+    "clsx": "2.1.1",
     "date-fns": "2.30.0",
     "framer-motion": "10.16.5",
     "jszip": "^3.10.1",
