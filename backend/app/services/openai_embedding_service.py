@@ -546,24 +546,25 @@ class OpenAIEmbeddingService:
             if filter_conditions:
                 where_clause = "WHERE " + " AND ".join(filter_conditions)
             
-            # Use pgvector's cosine distance for similarity search with inline embeddings
+            # Use pgvector's cosine distance for similarity search with proper embeddings table join
             raw_query = text(f"""
                 SELECT 
                     f.id as frame_id,
                     v.id as video_id,
                     f.timestamp,
-                    1 - (f.embedding <=> CAST(:query_vector AS vector)) as similarity,
+                    1 - (e.embedding <=> CAST(:query_vector AS vector)) as similarity,
                     f.frame_path,
                     f.frame_metadata,
                     v.original_filename as video_filename,
                     v.duration as video_duration,
-                    f.description
+                    f.frame_metadata->>'description' as description
                 FROM frames f
                 JOIN videos v ON f.video_id = v.id
+                JOIN embeddings e ON f.id = e.frame_id
                 {where_clause}
-                AND f.embedding IS NOT NULL
-                AND 1 - (f.embedding <=> CAST(:query_vector AS vector)) >= :similarity_threshold
-                ORDER BY f.embedding <=> CAST(:query_vector AS vector)
+                AND e.embedding IS NOT NULL
+                AND 1 - (e.embedding <=> CAST(:query_vector AS vector)) >= :similarity_threshold
+                ORDER BY e.embedding <=> CAST(:query_vector AS vector)
                 LIMIT :limit_results
             """)
             
