@@ -17,7 +17,7 @@ from fastapi import APIRouter
 api_router = APIRouter()
 
 # Import and include individual routers
-from app.api.v1 import videos, search, export, auth, contact, monitoring, gdpr, stats, admin
+from app.api.v1 import videos, search, export, auth, contact, monitoring, gdpr, stats, admin, simple_admin
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(videos.router, prefix="/videos", tags=["videos"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])  
@@ -27,6 +27,7 @@ api_router.include_router(monitoring.router, prefix="/monitoring", tags=["monito
 api_router.include_router(gdpr.router, prefix="/gdpr", tags=["gdpr", "privacy"])
 api_router.include_router(stats.router, prefix="/stats", tags=["stats"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin", "database"])
+api_router.include_router(simple_admin.router, prefix="/simple-admin", tags=["simple-admin", "fallback"])
 from app.core.config_secure import get_settings
 settings = get_settings()
 from app.core.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
