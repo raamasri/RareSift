@@ -208,6 +208,8 @@ class OpenAIEmbeddingService:
     async def initialize(self):
         """Initialize the OpenAI client"""
         if not self.is_initialized:
+            if not HAS_OPENAI:
+                raise ValueError("OpenAI library not available")
             if not settings.openai_api_key:
                 raise ValueError("OpenAI API key not found in settings")
             
