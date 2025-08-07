@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com"
-  },
-  "regions": ["iad1"],
-  "framework": "nextjs",
-  "rootDirectory": "frontend"
-}

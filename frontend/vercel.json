@@ -4,6 +4,7 @@
     "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com",
     "NEXT_PUBLIC_ENVIRONMENT": "production"
   },
+  "regions": ["iad1"],
   "headers": [
     {
       "source": "/(.*)",

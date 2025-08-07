@@ -1,45 +1,12 @@
-# Vercel Deployment Ignore File
-# Exclude large files and backend assets from Vercel deployment
-
-# Backend specific files (not frontend)
-backend/app/
-backend/alembic/
-backend/uploads/
-backend/frames/
-backend/.env*
-backend/Dockerfile*
-backend/requirements*.txt
-backend/*.py
-backend/start.sh
-docker-compose*.yml
-Dockerfile*
-*.log
-
-# Large video assets
+# Include only frontend directory
+backend/
 video_assets/
-backend/frames/
-backend/uploads/
-*.mp4
-*.mov
-*.avi
-
-# Development files
-.env.local
-.env.development
-node_modules/
-.DS_Store
-*.log
-
-# Test files
-test_*
-*_test.py
-__pycache__/
-
-# Database dumps
-*.sql
-*.dump
-
-# Scripts not needed for frontend
 scripts/
 monitoring/
 nginx/
+docker-compose*.yml
+Dockerfile*
+*.sql
+*.dump
+fix_pgvector.sql
+README.md
