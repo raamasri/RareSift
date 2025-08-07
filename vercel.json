@@ -4,7 +4,6 @@
     "NEXT_PUBLIC_API_URL": "https://raresift-backend.onrender.com"
   },
   "regions": ["iad1"],
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm ci"
+  "framework": "nextjs",
+  "rootDirectory": "frontend"
 }
