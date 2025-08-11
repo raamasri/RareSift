@@ -27,7 +27,7 @@ pydantic_core==2.27.2
 
 # HTTP client and utilities
 httpx==0.25.2
-requests==2.31.0
+requests==2.32.4
 
 # Image processing
 pillow==10.1.0
